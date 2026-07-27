@@ -189,7 +189,11 @@ const CourseCatalog = () => {
                       src={course.image_url || "/images/barista.jpg"}
                       alt={course.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => { (e.target as HTMLImageElement).src = "/images/barista.jpg"; }}
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.onerror = null; // prevent infinite loop
+                        img.src = "/placeholder.svg";
+                      }}
                     />
                     <div className="absolute top-4 left-4 flex gap-2">
                       <span className={course.price === 0 ? "badge-free" : "badge-premium"}>
