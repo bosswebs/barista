@@ -1,9 +1,265 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 36 43% 97%;
+    --foreground: 32 10% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 32 10% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 32 10% 15%;
+
+    --primary: 28 48% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 36 36% 72%;
+    --secondary-foreground: 32 10% 15%;
+
+    --muted: 36 43% 95%;
+    --muted-foreground: 32 10% 45%;
+
+    --accent: 32 24% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 36 36% 82%;
+    --input: 36 36% 82%;
+    --ring: 28 48% 52%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 96%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-poppins;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-cormorant font-semibold;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+
+  .section-padding {
+    @apply py-16 px-4 md:py-20 md:px-8 lg:px-16;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer components {
+  /* ========= BBA Marketing Nav/Buttons ========= */
+  .nav-link {
+    @apply relative hover:text-bba-brown transition-colors duration-300 after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-bba-brown after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+  }
+
+  .nav-link.active {
+    @apply font-medium text-bba-brown after:scale-x-100;
+  }
+
+  .btn-primary {
+    @apply bg-bba-brown text-white hover:bg-bba-lightBrown transition-colors duration-300 px-6 py-3 rounded-md font-medium;
+  }
+
+  .btn-secondary {
+    @apply bg-bba-gold text-bba-charcoal hover:bg-opacity-80 transition-colors duration-300 px-6 py-3 rounded-md font-medium;
+  }
+
+  .btn-outline {
+    @apply border-2 border-bba-brown text-bba-brown hover:bg-bba-brown hover:text-white transition-colors duration-300 px-6 py-[10px] rounded-md font-medium;
+  }
+
+  /* ========= LMS / Academy Buttons ========= */
+  .lms-btn-primary {
+    @apply bg-lms-primary text-white hover:bg-[#005861] transition-all duration-300 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-inter;
+  }
+
+  .lms-btn-secondary {
+    @apply bg-lms-secondary text-lms-dark hover:bg-[#6db5ae] transition-all duration-300 px-6 py-3 rounded-xl font-semibold font-inter;
+  }
+
+  .lms-btn-accent {
+    @apply bg-lms-accent text-white hover:bg-[#d4845e] transition-all duration-300 px-6 py-3 rounded-xl font-semibold font-inter;
+  }
+
+  .lms-btn-outline {
+    @apply border-2 border-lms-primary text-lms-primary hover:bg-lms-primary hover:text-white transition-all duration-300 px-6 py-[10px] rounded-xl font-semibold font-inter;
+  }
+
+  /* ========= Glass Cards ========= */
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl;
+  }
+
+  .glass-card-dark {
+    @apply bg-lms-dark/80 backdrop-blur-md border border-white/10 rounded-2xl shadow-xl;
+  }
+
+  .glass-card-light {
+    @apply bg-white/80 backdrop-blur-md border border-lms-secondary/20 rounded-2xl shadow-lg;
+  }
+
+  /* ========= LMS Cards ========= */
+  .course-card {
+    @apply bg-white rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border border-gray-100/50;
+  }
+
+  .stat-card {
+    @apply bg-white rounded-2xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300;
+  }
+
+  /* ========= Badges ========= */
+  .badge-free {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200;
+  }
+
+  .badge-premium {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-400 text-white;
+  }
+
+  .badge-new {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-lms-primary text-white;
+  }
+
+  .badge-bestseller {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-500 text-white;
+  }
+
+  /* ========= Difficulty Pills ========= */
+  .pill-beginner {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700;
+  }
+
+  .pill-intermediate {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700;
+  }
+
+  .pill-advanced {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700;
+  }
+
+  /* ========= Progress Bar ========= */
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2 overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-lms-primary to-lms-secondary rounded-full transition-all duration-700 ease-out;
+  }
+
+  /* ========= Feature / existing cards ========= */
+  .feature-card {
+    @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300;
+  }
+
+  .trainer-card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300;
+  }
+
+  .form-input {
+    @apply w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-bba-brown focus:border-transparent;
+  }
+
+  .lms-input {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-lms-primary focus:border-transparent font-inter bg-white;
+  }
+
+  /* ========= Scroll animations ========= */
+  .animate-on-scroll {
+    @apply opacity-0 translate-y-8 transition-all duration-700 ease-out;
+  }
+
+  .animate-on-scroll.show {
+    @apply opacity-100 translate-y-0;
+  }
+
+  /* ========= Gradient text ========= */
+  .gradient-text {
+    @apply bg-gradient-to-r from-lms-primary to-lms-secondary bg-clip-text text-transparent;
+  }
+
+  .gradient-text-warm {
+    @apply bg-gradient-to-r from-bba-brown to-bba-lightBrown bg-clip-text text-transparent;
+  }
+
+  /* ========= Section headings ========= */
+  .lms-section-title {
+    @apply font-cormorant font-bold text-lms-dark;
+  }
+
+  /* ========= Achievement badges ========= */
+  .achievement-badge {
+    @apply flex flex-col items-center p-4 bg-gradient-to-br from-lms-primary/10 to-lms-secondary/10 rounded-2xl border border-lms-secondary/30 hover:border-lms-primary/50 transition-all duration-300 hover:-translate-y-1;
+  }
+
+  /* ========= Job card ========= */
+  .job-card {
+    @apply bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:border-lms-secondary/40 transition-all duration-300 hover:-translate-y-1;
+  }
+
+  /* ========= Event card ========= */
+  .event-card {
+    @apply bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300;
+  }
+
+  /* ========= Blog card ========= */
+  .blog-card {
+    @apply bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300;
+  }
+}
+
 
 @layer base {
   :root {

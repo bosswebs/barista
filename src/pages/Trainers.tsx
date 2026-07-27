@@ -19,10 +19,10 @@ const Trainers = () => {
       bio: "The man of ambitious, With Rwandan nationality claude combines technical coffee, spirit and wines knowledge with exaptational mixology skills, has completed university studies in hospitality management from Uganda kampala, worked as peace keeping agent at international level (darri-fur) Sudan, claude known for his innovative cocktail creations and deep knowledge of wines, traveled extensively throughout wine regions in France (Beaurdaux), Italy, Spain, California as well as south Africa."
     },
     {
-      name: "Shubbam GD",
-      role: "Head mixology trainer",
-      image: "images/wood1.jpg",
-      bio: "The man of innovative, creative and leadership, with Indian nationality, Shubham brings an international training methodology in modern mixology, he was bars manager in Indian and traveling the world telling hospitality stories and career awakening"
+      name: "SHUBHAM GARG",
+      role: "Head Mixology Trainer & Hospitality Expert",
+      image: "images/trainers/shubham-garg.jpg",
+      bio: "Passionate and dedicated hospitality professional with over 6 years of experience in Bar, Restaurant, and overall food and beverage service. Proven ability to deliver exceptional customer service, manage operations, and contribute to smooth and efficient service delivery. Adept at working in fast-paced environments, with strong focus on quality and guest satisfaction"
     },
     {
       name: "Christine Mugisha",
@@ -76,7 +76,7 @@ const Trainers = () => {
       </section>
 
       {/* Join Our Team Section */}
-      <section className="section-padding bg-bba-cream">
+      <section className="section-padding bg-gray-50">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
