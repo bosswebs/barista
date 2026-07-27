@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Backups and Archives
+*.zip
+*.backup
+*.backup.gz
+*.timestamp-*.mjs
+implementation_plan.md
+
