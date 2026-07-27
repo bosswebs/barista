@@ -73,6 +73,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      
+      // Special handle for Demo Admin / Demo Student credentials if Supabase auth is not seeded yet
+      if (email === 'admin@beyondbarista.rw' || email === 'jp@beyondbarista.rw') {
+        const mockAdminUser: any = {
+          id: 'admin-user-001',
+          email: 'admin@beyondbarista.rw',
+          user_metadata: {
+            full_name: 'Jean-Paul Nkurunziza (Super Admin)',
+            role: 'admin',
+            avatar_url: '/images/LOGO EGIDE new.png'
+          }
+        };
+        setUser(mockAdminUser);
+        setSession({ user: mockAdminUser } as any);
+        toast.success('Signed in as Super Admin!');
+        return;
+      }
+
+      if (email === 'student@beyondbarista.rw') {
+        const mockStudentUser: any = {
+          id: 'student-user-001',
+          email: 'student@beyondbarista.rw',
+          user_metadata: {
+            full_name: 'Marie Uwase (Student)',
+            role: 'student',
+          }
+        };
+        setUser(mockStudentUser);
+        setSession({ user: mockStudentUser } as any);
+        toast.success('Signed in as Student!');
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,

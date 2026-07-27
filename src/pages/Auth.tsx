@@ -128,9 +128,31 @@ const Auth = () => {
                   Sign in with Google
                 </Button>
                 
+                {/* Quick Demo Credentials Buttons */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="default"
+                    className="bg-bba-brown text-white text-xs py-2 h-auto flex items-center justify-center gap-1.5"
+                    onClick={() => signIn('admin@beyondbarista.rw', 'Admin@BBA2026')}
+                    disabled={isLoading}
+                  >
+                    👑 Demo Admin
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-bba-gold text-bba-brown hover:bg-bba-gold/10 text-xs py-2 h-auto flex items-center justify-center gap-1.5"
+                    onClick={() => signIn('student@beyondbarista.rw', 'Student@BBA2026')}
+                    disabled={isLoading}
+                  >
+                    🎓 Demo Student
+                  </Button>
+                </div>
+
                 <div className="flex items-center">
                   <Separator className="flex-1" />
-                  <span className="px-3 text-xs text-muted-foreground">or continue with email</span>
+                  <span className="px-3 text-xs text-muted-foreground">or email sign in</span>
                   <Separator className="flex-1" />
                 </div>
                 
