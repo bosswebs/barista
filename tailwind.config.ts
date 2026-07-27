@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,24 +62,26 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// BBA Marketing site colors (coffee-brown palette)
+				// BBA Brand Coffee Palette (matching the official logo emblem)
 				bba: {
 					brown: '#5C3D2E',
+					darkBrown: '#3D2314',
 					gold: '#D4B483',
-					cream: '#E0C097',
+					cream: '#FAF6F0',
 					lightBrown: '#B85C38',
-					charcoal: '#2D2424',
+					charcoal: '#21130D',
 				},
-				// BBA Academy/LMS colors (teal palette per GUIDE.md)
+				// LMS & Academy Ecosystem colors (unified with Coffee & Gold brand)
 				lms: {
-					primary: '#006D77',
-					secondary: '#83C5BE',
-					accent: '#E29578',
-					dark: '#1E293B',
+					primary: '#5C3D2E',
+					primaryDark: '#3D2314',
+					secondary: '#D4B483',
+					accent: '#B85C38',
+					dark: '#21130D',
 					success: '#16A34A',
 					warning: '#F59E0B',
 					danger: '#DC2626',
-					bg: '#F8F9FA',
+					bg: '#FAF6F0',
 				},
 			},
 			borderRadius: {
@@ -127,8 +128,8 @@ export default {
 					'100%': { opacity: '1', transform: 'translateY(0)' }
 				},
 				'pulse-glow': {
-					'0%, 100%': { boxShadow: '0 0 0 0 rgba(0, 109, 119, 0.3)' },
-					'50%': { boxShadow: '0 0 0 12px rgba(0, 109, 119, 0)' }
+					'0%, 100%': { boxShadow: '0 0 0 0 rgba(92, 61, 46, 0.4)' },
+					'50%': { boxShadow: '0 0 0 12px rgba(92, 61, 46, 0)' }
 				},
 				'spin-slow': {
 					'0%': { transform: 'rotate(0deg)' },
@@ -148,9 +149,9 @@ export default {
 				'spin-slow': 'spin-slow 8s linear infinite',
 			},
 			backgroundImage: {
-				'lms-gradient': 'linear-gradient(135deg, #006D77 0%, #004E57 50%, #1E293B 100%)',
-				'lms-gradient-light': 'linear-gradient(135deg, #83C5BE20 0%, #006D7710 100%)',
-				'hero-gradient': 'linear-gradient(to bottom right, rgba(0,77,87,0.95), rgba(30,41,59,0.9))',
+				'lms-gradient': 'linear-gradient(135deg, #3D2314 0%, #2B180D 50%, #1A0E08 100%)',
+				'lms-gradient-light': 'linear-gradient(135deg, #D4B48320 0%, #5C3D2E10 100%)',
+				'hero-gradient': 'linear-gradient(to bottom right, rgba(61, 35, 20, 0.95), rgba(33, 19, 13, 0.9))',
 				'card-shimmer': 'linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.08) 50%, transparent 75%)',
 			},
 		}

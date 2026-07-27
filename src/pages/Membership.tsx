@@ -65,7 +65,7 @@ const plans = [
     period: '/year',
     badge: 'Best Value — Save 43%',
     color: 'border-lms-accent',
-    headerColor: 'bg-gradient-to-br from-lms-accent to-[#d4845e]',
+    headerColor: 'bg-gradient-to-br from-lms-accent to-[#9d4b29]',
     icon: Crown,
     iconColor: 'text-white',
     description: 'Everything in Monthly plus career placement support.',
@@ -83,7 +83,7 @@ const plans = [
     ],
     cta: 'Start Annual Plan',
     ctaLink: '/auth?plan=annual',
-    ctaStyle: 'bg-gradient-to-r from-lms-accent to-[#d4845e] text-white hover:opacity-90',
+    ctaStyle: 'bg-gradient-to-r from-lms-accent to-[#9d4b29] text-white hover:opacity-90',
   },
 ];
 

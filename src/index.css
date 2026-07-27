@@ -123,15 +123,15 @@
 
   /* ========= LMS / Academy Buttons ========= */
   .lms-btn-primary {
-    @apply bg-lms-primary text-white hover:bg-[#005861] transition-all duration-300 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-inter;
+    @apply bg-lms-primary text-white hover:bg-lms-primaryDark transition-all duration-300 px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-inter;
   }
 
   .lms-btn-secondary {
-    @apply bg-lms-secondary text-lms-dark hover:bg-[#6db5ae] transition-all duration-300 px-6 py-3 rounded-xl font-semibold font-inter;
+    @apply bg-lms-secondary text-lms-dark hover:bg-[#c5a473] transition-all duration-300 px-6 py-3 rounded-xl font-semibold font-inter;
   }
 
   .lms-btn-accent {
-    @apply bg-lms-accent text-white hover:bg-[#d4845e] transition-all duration-300 px-6 py-3 rounded-xl font-semibold font-inter;
+    @apply bg-lms-accent text-white hover:bg-[#9d4b29] transition-all duration-300 px-6 py-3 rounded-xl font-semibold font-inter;
   }
 
   .lms-btn-outline {

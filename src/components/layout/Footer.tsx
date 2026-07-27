@@ -7,7 +7,7 @@ const Footer = () => {
   return (
     <footer className="bg-lms-dark text-white">
       {/* Newsletter CTA */}
-      <div className="bg-gradient-to-r from-lms-primary to-[#004E57] py-12">
+      <div className="bg-gradient-to-r from-lms-primary to-[#2C1810] py-12">
         <div className="container-custom">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
@@ -20,7 +20,7 @@ const Footer = () => {
                 placeholder="Enter your email address"
                 className="flex-1 md:w-72 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-lms-secondary font-inter text-sm"
               />
-              <button className="px-5 py-3 bg-lms-accent hover:bg-[#d4845e] text-white rounded-xl font-semibold font-inter text-sm transition-colors whitespace-nowrap flex items-center gap-2">
+              <button className="px-5 py-3 bg-lms-accent hover:bg-[#9d4b29] text-white rounded-xl font-semibold font-inter text-sm transition-colors whitespace-nowrap flex items-center gap-2">
                 Subscribe <ArrowRight size={16} />
               </button>
             </div>

@@ -179,7 +179,7 @@ const Navbar = () => {
                 <Button variant="ghost" className="text-gray-700 font-medium">Sign In</Button>
               </Link>
               <Link to="/membership">
-                <Button className="bg-lms-primary hover:bg-[#005861] text-white rounded-xl font-semibold shadow-md">
+                <Button className="bg-lms-primary hover:bg-lms-primaryDark text-white rounded-xl font-semibold shadow-md">
                   Get Started
                 </Button>
               </Link>
