@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ChevronLeft, CheckCircle, Circle, PlayCircle, FileText, AlertCircle } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ChevronLeft, CheckCircle, Circle, PlayCircle, FileText, AlertCircle, HelpCircle, Award, BookOpen, MessageSquare, Download, Share2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { BARISTA_CURRICULUM } from "@/data/baristaCurriculum";
 
 const CoursePlayer = () => {
   const { courseId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [course, setCourse] = useState<any>(null);
   const [activeLesson, setActiveLesson] = useState<any>(null);
@@ -15,17 +17,19 @@ const CoursePlayer = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'content' | 'notes' | 'discussion' | 'resources'>('content');
+  const [userNotes, setUserNotes] = useState("");
 
   useEffect(() => {
-    if (courseId) fetchCourse();
+    fetchCourse();
   }, [courseId, user]);
 
   const fetchCourse = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch course with modules and lessons
-      const { data: courseData, error: courseErr } = await supabase
+      // Try to fetch from Supabase
+      const { data: courseData } = await supabase
         .from('courses')
         .select(`
           id, title, description,
@@ -35,45 +39,83 @@ const CoursePlayer = () => {
           )
         `)
         .eq('id', courseId)
-        .single();
+        .maybeSingle();
 
-      if (courseErr) throw courseErr;
-
-      // Sort modules and lessons by order_index
-      const sortedCourse = {
-        ...courseData,
-        modules: (courseData.modules || [])
-          .sort((a: any, b: any) => a.order_index - b.order_index)
-          .map((m: any) => ({
-            ...m,
-            lessons: (m.lessons || []).sort((a: any, b: any) => a.order_index - b.order_index),
-          })),
-      };
-
-      setCourse(sortedCourse);
-
-      // Set first lesson as active
-      if (sortedCourse.modules?.[0]?.lessons?.[0]) {
-        setActiveLesson(sortedCourse.modules[0].lessons[0]);
+      if (courseData && courseData.modules && courseData.modules.length > 0) {
+        const sortedCourse = {
+          ...courseData,
+          modules: (courseData.modules || [])
+            .sort((a: any, b: any) => a.order_index - b.order_index)
+            .map((m: any) => ({
+              ...m,
+              lessons: (m.lessons || []).sort((a: any, b: any) => a.order_index - b.order_index),
+            })),
+        };
+        setCourse(sortedCourse);
+        if (sortedCourse.modules?.[0]?.lessons?.[0]) {
+          setActiveLesson(sortedCourse.modules[0].lessons[0]);
+        }
+      } else {
+        // Use full 24-Module BARISTA Curriculum
+        const defaultCourse = {
+          id: courseId || 'barista-mastery',
+          title: 'Professional Barista Mastery & Coffee Ecosystem (24 Modules + Certification)',
+          description: 'The complete 24-module professional barista program from bean origin to roasting, brewing, sensory skills, hospitality management, and entrepreneurship.',
+          modules: BARISTA_CURRICULUM.map(m => ({
+            id: m.id,
+            title: m.title,
+            description: m.description,
+            order_index: m.moduleNumber,
+            lessons: m.lessons.map(l => ({
+              id: l.id,
+              title: l.title,
+              content: l.content,
+              video_url: l.videoUrl || '',
+              type: l.type,
+              order_index: 0
+            }))
+          }))
+        };
+        setCourse(defaultCourse);
+        setActiveLesson(defaultCourse.modules[0].lessons[0]);
       }
 
-      // Fetch user's completed lessons for this course
+      // Fetch user's completed lessons
       if (user) {
-        const allLessonIds = sortedCourse.modules.flatMap((m: any) => m.lessons.map((l: any) => l.id));
-        if (allLessonIds.length > 0) {
-          const { data: progress } = await supabase
-            .from('user_progress')
-            .select('lesson_id')
-            .eq('user_id', user.id)
-            .eq('completed', true)
-            .in('lesson_id', allLessonIds);
+        const { data: progress } = await supabase
+          .from('user_progress')
+          .select('lesson_id')
+          .eq('user_id', user.id)
+          .eq('completed', true);
 
-          setCompletedLessons((progress || []).map((p: any) => p.lesson_id));
+        if (progress) {
+          setCompletedLessons(progress.map((p: any) => p.lesson_id));
         }
       }
     } catch (err: any) {
       console.error("Error fetching course:", err);
-      setError("Could not load this course. Please try again.");
+      // Fallback to 24-Module Barista curriculum
+      const defaultCourse = {
+        id: courseId || 'barista-mastery',
+        title: 'Professional Barista Mastery (24 Modules + Certification)',
+        description: 'Complete 24-module professional barista curriculum.',
+        modules: BARISTA_CURRICULUM.map(m => ({
+          id: m.id,
+          title: m.title,
+          description: m.description,
+          order_index: m.moduleNumber,
+          lessons: m.lessons.map(l => ({
+            id: l.id,
+            title: l.title,
+            content: l.content,
+            video_url: l.videoUrl || '',
+            type: l.type,
+            order_index: 0
+          }))
+        }))
+      };
+      setCourse(defaultCourse);
+      setActiveLesson(defaultCourse.modules[0].lessons[0]);
     } finally {
       setIsLoading(false);
     }
