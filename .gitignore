@@ -33,3 +33,5 @@ dist-ssr
 *.timestamp-*.mjs
 implementation_plan.md
 
+.vercel
+.env*

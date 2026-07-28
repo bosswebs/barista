@@ -4,7 +4,7 @@ import { Save, ArrowLeft, Plus, Trash2, GripVertical, Video, FileText, AlertCirc
 import Layout from "@/components/layout/Layout";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 
 interface Lesson {
   id: string;
@@ -28,7 +28,7 @@ export default function CourseEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = !id;
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
 
   const [isLoading, setIsLoading] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
@@ -53,19 +53,8 @@ export default function CourseEditor() {
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error: fetchErr } = await supabase
-        .from('courses')
-        .select(`
-          id, title, description, image_url,
-          modules (
-            id, title, order_index,
-            lessons (id, title, content, video_url, order_index)
-          )
-        `)
-        .eq('id', courseId)
-        .single();
-
-      if (fetchErr) throw fetchErr;
+      const token = await getToken();
+      const data = await api.courses.get(courseId, token);
 
       setCourse({
         title: data.title || "",
@@ -105,36 +94,31 @@ export default function CourseEditor() {
 
     setIsSaving(true);
     try {
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in");
+
       let courseId = id;
 
       if (isNew) {
-        // Insert new course
-        const { data: newCourse, error: insertErr } = await supabase
-          .from('courses')
-          .insert({
+        const newCourse = await api.courses.create(
+          {
             title: course.title,
             description: course.description || null,
             image_url: course.image_url || null,
-            instructor_id: user.id,
-          })
-          .select()
-          .single();
-
-        if (insertErr) throw insertErr;
+          },
+          token
+        );
         courseId = newCourse.id;
-      } else {
-        // Update existing course
-        const { error: updateErr } = await supabase
-          .from('courses')
-          .update({
+      } else if (courseId) {
+        await api.courses.update(
+          courseId,
+          {
             title: course.title,
             description: course.description || null,
             image_url: course.image_url || null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', courseId);
-
-        if (updateErr) throw updateErr;
+          },
+          token
+        );
       }
 
       // Save each module
@@ -143,51 +127,36 @@ export default function CourseEditor() {
         let moduleId = mod.id;
 
         if (mod.isNew) {
-          const { data: newMod, error: modErr } = await supabase
-            .from('modules')
-            .insert({
-              course_id: courseId,
-              title: mod.title,
-              order_index: mIdx,
-            })
-            .select()
-            .single();
-
-          if (modErr) throw modErr;
+          const newMod = await api.modules.create({ course_id: courseId, title: mod.title }, token);
           moduleId = newMod.id;
         } else {
-          await supabase
-            .from('modules')
-            .update({ title: mod.title, order_index: mIdx, updated_at: new Date().toISOString() })
-            .eq('id', moduleId);
+          await api.modules.update(moduleId, { title: mod.title, order_index: mIdx }, token);
         }
 
         // Save each lesson in this module
         for (let lIdx = 0; lIdx < mod.lessons.length; lIdx++) {
           const lesson = mod.lessons[lIdx];
-
           if (lesson.isNew) {
-            const { error: lessonErr } = await supabase
-              .from('lessons')
-              .insert({
+            await api.lessons.create(
+              {
                 module_id: moduleId,
                 title: lesson.title,
                 video_url: lesson.video_url || null,
                 content: lesson.content || null,
-                order_index: lIdx,
-              });
-            if (lessonErr) throw lessonErr;
+              },
+              token
+            );
           } else {
-            await supabase
-              .from('lessons')
-              .update({
+            await api.lessons.update(
+              lesson.id,
+              {
                 title: lesson.title,
                 video_url: lesson.video_url || null,
                 content: lesson.content || null,
                 order_index: lIdx,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', lesson.id);
+              },
+              token
+            );
           }
         }
       }
@@ -217,7 +186,8 @@ export default function CourseEditor() {
   const removeModule = async (moduleId: string, isNewModule?: boolean) => {
     if (!isNewModule && !window.confirm("Delete this module and all its lessons?")) return;
     if (!isNewModule) {
-      await supabase.from('modules').delete().eq('id', moduleId);
+      const token = await getToken();
+      if (token) await api.modules.remove(moduleId, token);
     }
     setModules(modules.filter((m) => m.id !== moduleId));
   };
@@ -248,7 +218,8 @@ export default function CourseEditor() {
 
   const removeLesson = async (moduleId: string, lessonId: string, isNewLesson?: boolean) => {
     if (!isNewLesson) {
-      await supabase.from('lessons').delete().eq('id', lessonId);
+      const token = await getToken();
+      if (token) await api.lessons.remove(lessonId, token);
     }
     setModules(
       modules.map((m) =>

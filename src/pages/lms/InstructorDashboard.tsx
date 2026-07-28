@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { Plus, Edit, Trash2, Users, BookOpen, AlertCircle, RefreshCw } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 const InstructorDashboard = () => {
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,29 +21,9 @@ const InstructorDashboard = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error: fetchErr } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('instructor_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (fetchErr) throw fetchErr;
-
-      // For each course, get enrollment count
-      const coursesWithCounts = await Promise.all(
-        (data || []).map(async (course) => {
-          const { count } = await supabase
-            .from('enrollments')
-            .select('*', { count: 'exact', head: true })
-            .eq('course_id', course.id);
-
-          return {
-            ...course,
-            students: count || 0,
-          };
-        })
-      );
-
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in");
+      const coursesWithCounts = await api.instructor.courses(token);
       setCourses(coursesWithCounts);
     } catch (err: any) {
       console.error("Error fetching courses:", err);
@@ -57,8 +37,9 @@ const InstructorDashboard = () => {
     if (!window.confirm(`Delete "${title}"? This will also remove all modules, lessons, and student enrollments. This cannot be undone.`)) return;
 
     try {
-      const { error } = await supabase.from('courses').delete().eq('id', id);
-      if (error) throw error;
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in");
+      await api.courses.remove(id, token);
 
       setCourses(courses.filter((c) => c.id !== id));
       toast.success("Course deleted successfully.");

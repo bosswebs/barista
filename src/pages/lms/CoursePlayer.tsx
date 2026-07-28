@@ -1,121 +1,54 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, CheckCircle, Circle, PlayCircle, FileText, AlertCircle, HelpCircle, Award, BookOpen, MessageSquare, Download, Share2 } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { ChevronLeft, CheckCircle, Circle, PlayCircle, FileText, AlertCircle } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { BARISTA_CURRICULUM } from "@/data/baristaCurriculum";
 
 const CoursePlayer = () => {
   const { courseId } = useParams();
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [course, setCourse] = useState<any>(null);
   const [activeLesson, setActiveLesson] = useState<any>(null);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'content' | 'notes' | 'discussion' | 'resources'>('content');
-  const [userNotes, setUserNotes] = useState("");
 
   useEffect(() => {
     fetchCourse();
   }, [courseId, user]);
 
   const fetchCourse = async () => {
+    if (!courseId) return;
     setIsLoading(true);
     setError(null);
     try {
-      // Try to fetch from Supabase
-      const { data: courseData } = await supabase
-        .from('courses')
-        .select(`
-          id, title, description,
-          modules (
-            id, title, order_index,
-            lessons (id, title, content, video_url, order_index)
-          )
-        `)
-        .eq('id', courseId)
-        .maybeSingle();
+      const token = await getToken();
+      const courseData = await api.courses.get(courseId, token);
 
-      if (courseData && courseData.modules && courseData.modules.length > 0) {
-        const sortedCourse = {
-          ...courseData,
-          modules: (courseData.modules || [])
-            .sort((a: any, b: any) => a.order_index - b.order_index)
-            .map((m: any) => ({
-              ...m,
-              lessons: (m.lessons || []).sort((a: any, b: any) => a.order_index - b.order_index),
-            })),
-        };
-        setCourse(sortedCourse);
-        if (sortedCourse.modules?.[0]?.lessons?.[0]) {
-          setActiveLesson(sortedCourse.modules[0].lessons[0]);
-        }
-      } else {
-        // Use full 24-Module BARISTA Curriculum
-        const defaultCourse = {
-          id: courseId || 'barista-mastery',
-          title: 'Professional Barista Mastery & Coffee Ecosystem (24 Modules + Certification)',
-          description: 'The complete 24-module professional barista program from bean origin to roasting, brewing, sensory skills, hospitality management, and entrepreneurship.',
-          modules: BARISTA_CURRICULUM.map(m => ({
-            id: m.id,
-            title: m.title,
-            description: m.description,
-            order_index: m.moduleNumber,
-            lessons: m.lessons.map(l => ({
-              id: l.id,
-              title: l.title,
-              content: l.content,
-              video_url: l.videoUrl || '',
-              type: l.type,
-              order_index: 0
-            }))
-          }))
-        };
-        setCourse(defaultCourse);
-        setActiveLesson(defaultCourse.modules[0].lessons[0]);
+      const sortedCourse = {
+        ...courseData,
+        modules: (courseData.modules || [])
+          .sort((a: any, b: any) => a.order_index - b.order_index)
+          .map((m: any) => ({
+            ...m,
+            lessons: (m.lessons || []).sort((a: any, b: any) => a.order_index - b.order_index),
+          })),
+      };
+      setCourse(sortedCourse);
+      if (sortedCourse.modules?.[0]?.lessons?.[0]) {
+        setActiveLesson(sortedCourse.modules[0].lessons[0]);
       }
 
-      // Fetch user's completed lessons
-      if (user) {
-        const { data: progress } = await supabase
-          .from('user_progress')
-          .select('lesson_id')
-          .eq('user_id', user.id)
-          .eq('completed', true);
-
-        if (progress) {
-          setCompletedLessons(progress.map((p: any) => p.lesson_id));
-        }
+      if (user && token) {
+        const progress = await api.progress.forCourse(courseId, token);
+        setCompletedLessons(progress.completed_lesson_ids);
       }
     } catch (err: any) {
       console.error("Error fetching course:", err);
-      // Fallback to 24-Module Barista curriculum
-      const defaultCourse = {
-        id: courseId || 'barista-mastery',
-        title: 'Professional Barista Mastery (24 Modules + Certification)',
-        description: 'Complete 24-module professional barista curriculum.',
-        modules: BARISTA_CURRICULUM.map(m => ({
-          id: m.id,
-          title: m.title,
-          description: m.description,
-          order_index: m.moduleNumber,
-          lessons: m.lessons.map(l => ({
-            id: l.id,
-            title: l.title,
-            content: l.content,
-            video_url: l.videoUrl || '',
-            type: l.type,
-            order_index: 0
-          }))
-        }))
-      };
-      setCourse(defaultCourse);
-      setActiveLesson(defaultCourse.modules[0].lessons[0]);
+      setError("Could not load this course. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -130,21 +63,11 @@ const CoursePlayer = () => {
 
     if (user) {
       try {
-        const { error } = await supabase
-          .from('user_progress')
-          .upsert({
-            user_id: user.id,
-            lesson_id: lessonId,
-            completed: true,
-            completed_at: new Date().toISOString(),
-          }, { onConflict: 'user_id,lesson_id' });
-
-        if (error) {
-          // Revert on failure
-          setCompletedLessons((prev) => prev.filter((id) => id !== lessonId));
-          toast.error("Failed to save progress.");
-        }
+        const token = await getToken();
+        if (!token) throw new Error("Not signed in");
+        await api.progress.markComplete(lessonId, token);
       } catch (err) {
+        // Revert on failure
         setCompletedLessons((prev) => prev.filter((id) => id !== lessonId));
         toast.error("Failed to save progress.");
       }

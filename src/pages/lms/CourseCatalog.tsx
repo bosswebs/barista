@@ -2,23 +2,22 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Users, PlusCircle, CheckCircle, AlertCircle, Search, Star, Filter } from "lucide-react";
 import Layout from "@/components/layout/Layout";
-import SectionTitle from "@/components/ui/SectionTitle";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 
 const categories = [
-  "All", "Professional Barista", "Food & Beverage", "Restaurant Service", 
+  "All", "Professional Barista", "Food & Beverage", "Restaurant Service",
   "Bartending & Mixology", "Hospitality Management", "HACCP & Food Safety"
 ];
 
 const CourseCatalog = () => {
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -31,42 +30,16 @@ const CourseCatalog = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const { data: coursesData, error: coursesErr } = await supabase
-        .from('courses')
-        .select(`*, profiles(full_name)`)
-        .order('created_at', { ascending: false });
+      const token = await getToken();
+      const coursesData = await api.courses.list(token);
 
-      if (coursesErr) throw coursesErr;
-
-      let enrolledIds: string[] = [];
-      if (user) {
-        const { data: enrollments } = await supabase
-          .from('enrollments')
-          .select('course_id')
-          .eq('user_id', user.id);
-        enrolledIds = (enrollments || []).map((e: any) => e.course_id);
-      }
-
-      const coursesWithDetails = await Promise.all(
-        (coursesData || []).map(async (course) => {
-          const { count } = await supabase
-            .from('enrollments')
-            .select('*', { count: 'exact', head: true })
-            .eq('course_id', course.id);
-
-          return {
-            ...course,
-            instructor_name: (course.profiles as any)?.full_name || 'BBA Instructor',
-            students: count || 0,
-            is_enrolled: enrolledIds.includes(course.id),
-            category: course.category || 'Professional Barista',
-            difficulty: course.difficulty || 'Beginner',
-            is_premium: course.is_premium || false,
-            price: course.price || 0,
-            rating: 4.8 + Math.random() * 0.2
-          };
-        })
-      );
+      const coursesWithDetails = coursesData.map((course) => ({
+        ...course,
+        category: course.category || 'Professional Barista',
+        difficulty: course.difficulty || 'Beginner',
+        is_premium: course.price > 0,
+        rating: 4.8 + Math.random() * 0.2,
+      }));
 
       setCourses(coursesWithDetails);
     } catch (err: any) {
@@ -85,20 +58,11 @@ const CourseCatalog = () => {
 
     setEnrollingId(courseId);
     try {
-      const { error } = await supabase
-        .from('enrollments')
-        .insert({ user_id: user.id, course_id: courseId, status: 'active' });
-
-      if (error) {
-        if (error.code === '23505') {
-          toast.info("You are already enrolled in this course.");
-        } else {
-          throw error;
-        }
-      } else {
-        toast.success("Successfully enrolled! Start learning now.");
-        setCourses(courses.map((c) => c.id === courseId ? { ...c, is_enrolled: true, students: c.students + 1 } : c));
-      }
+      const token = await getToken();
+      if (!token) throw new Error("Not signed in");
+      await api.enrollments.enroll(courseId, token);
+      toast.success("Successfully enrolled! Start learning now.");
+      setCourses(courses.map((c) => c.id === courseId ? { ...c, is_enrolled: true, students: c.students + 1 } : c));
     } catch (err: any) {
       toast.error("Failed to enroll: " + err.message);
     } finally {

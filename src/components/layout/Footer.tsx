@@ -35,7 +35,7 @@ const Footer = () => {
           {/* Column 1: Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-5">
-              <img src="/images/LOGO EGIDE new.png" alt="BBA Logo" className="h-12 w-12 object-contain" />
+              <img src="/images/logo.png" alt="BBA Logo" className="h-12 w-12 object-contain" />
               <div>
                 <h3 className="font-cormorant text-xl font-bold text-white leading-tight">Beyond Barista Academy</h3>
                 <p className="text-lms-secondary text-xs font-inter">Rwanda • Est. 2020</p>

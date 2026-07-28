@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
+import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
+import { PORTALS, getAvailablePortals } from '@/lib/portals';
 import {
   Coffee, UtensilsCrossed, Wine, Star, Users, Award, BookOpen,
   Briefcase, Calendar, ArrowRight, Play, CheckCircle, ChevronLeft,
-  ChevronRight, Sparkles, TrendingUp, Globe, Shield
+  ChevronRight, Sparkles, TrendingUp, Globe, Shield, LogIn
 } from 'lucide-react';
 
 // ============ DATA ============
@@ -24,29 +27,6 @@ const categories = [
   { name: 'Hotel Operations', icon: Shield, count: 6, color: 'bg-blue-50 text-blue-700 border-blue-200' },
   { name: 'HACCP & Food Safety', icon: CheckCircle, count: 3, color: 'bg-green-50 text-green-700 border-green-200' },
   { name: 'Entrepreneurship', icon: TrendingUp, count: 4, color: 'bg-teal-50 text-teal-700 border-teal-200' },
-];
-
-const featuredCourses = [
-  {
-    id: '1', title: 'Professional Barista Mastery', category: 'Barista Training',
-    image: '/images/barista.jpg', instructor: 'Chef Jean-Paul', duration: '24 hrs',
-    students: 342, rating: 4.9, price: 0, badge: 'bestseller',
-  },
-  {
-    id: '2', title: 'Advanced Mixology & Cocktail Arts', category: 'Bartending',
-    image: '/images/vodka.jpg', instructor: 'Master Émile', duration: '18 hrs',
-    students: 218, rating: 4.8, price: 49, badge: 'premium',
-  },
-  {
-    id: '3', title: 'Wine Sommelier Certification', category: 'Sommelier',
-    image: '/images/wine.jpg', instructor: 'Maître Amina', duration: '32 hrs',
-    students: 156, rating: 4.9, price: 79, badge: 'premium',
-  },
-  {
-    id: '4', title: 'Restaurant Service Excellence', category: 'Restaurant Service',
-    image: '/images/barista.jpg', instructor: 'Pascal K.', duration: '16 hrs',
-    students: 289, rating: 4.7, price: 0, badge: 'free',
-  },
 ];
 
 const testimonials = [
@@ -127,9 +107,14 @@ const Stars = ({ rating }: { rating: number }) => (
 
 // ============ MAIN PAGE ============
 const Index = () => {
+  const { user } = useAuth();
   const [statsVisible, setStatsVisible] = useState(false);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [featuredCourses, setFeaturedCourses] = useState<any[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
   const statsRef = useRef<HTMLDivElement>(null);
+
+  const portals = user ? getAvailablePortals(user.user_metadata?.role) : PORTALS;
 
   useEffect(() => {
     const observer = new IntersectionObserver(([e]) => {
@@ -142,6 +127,22 @@ const Index = () => {
   useEffect(() => {
     const t = setInterval(() => setTestimonialIdx(i => (i + 1) % testimonials.length), 5000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    api.courses.list()
+      .then((courses) => {
+        const top = [...courses]
+          .sort((a, b) => (b.students || 0) - (a.students || 0))
+          .slice(0, 4)
+          .map((c, i) => ({
+            ...c,
+            badge: i === 0 && c.students > 0 ? 'bestseller' : c.price === 0 ? 'free' : 'premium',
+          }));
+        setFeaturedCourses(top);
+      })
+      .catch(() => setFeaturedCourses([]))
+      .finally(() => setCoursesLoading(false));
   }, []);
 
   return (
@@ -197,7 +198,7 @@ const Index = () => {
 
             {/* Trust indicators */}
             <div className="flex flex-wrap items-center gap-6 mt-12 pt-8 border-t border-white/10">
-              {['Supabase Powered', 'Secure Payments', 'Verified Certificates'].map((item) => (
+              {['Neon Powered', 'Secure Payments', 'Verified Certificates'].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-white/60 text-sm font-inter">
                   <CheckCircle size={14} className="text-lms-secondary" />
                   {item}
@@ -212,6 +213,49 @@ const Index = () => {
           <p className="text-xs font-inter">Scroll to explore</p>
           <div className="w-5 h-8 border-2 border-white/30 rounded-full flex items-start justify-center pt-1">
             <div className="w-1 h-2 bg-white/50 rounded-full animate-scroll" />
+          </div>
+        </div>
+      </section>
+
+      {/* ===== PORTAL ACCESS ===== */}
+      <section className="section-padding bg-white">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <span className="text-lms-primary text-sm font-semibold font-inter uppercase tracking-widest">
+              {user ? `Welcome back, ${user.user_metadata?.full_name || 'friend'}` : 'Portal Access'}
+            </span>
+            <h2 className="font-cormorant text-4xl md:text-5xl font-bold text-lms-dark mt-2 mb-4">
+              {user ? 'Jump Back Into Your Portal' : 'One Academy, Three Portals'}
+            </h2>
+            <p className="text-gray-600 font-inter max-w-2xl mx-auto">
+              {user
+                ? 'Pick up right where you left off.'
+                : 'Students, instructors, and administrators each get a dedicated dashboard built for their role.'}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6">
+            {portals.map((portal) => (
+              <div key={portal.href}
+                className="w-full sm:w-80 p-6 rounded-2xl border-2 border-gray-100 hover:border-lms-secondary/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-lms-bg/40">
+                <div className="w-14 h-14 rounded-2xl bg-lms-primary/10 flex items-center justify-center mb-5">
+                  <portal.icon size={26} className="text-lms-primary" />
+                </div>
+                <h3 className="font-cormorant font-bold text-2xl text-lms-dark mb-2">{portal.title}</h3>
+                <p className="text-gray-600 font-inter text-sm mb-6 leading-relaxed">{portal.description}</p>
+                {user ? (
+                  <Link to={portal.href}
+                    className="lms-btn-primary w-full flex items-center justify-center gap-2 text-sm py-3">
+                    Enter Dashboard <ArrowRight size={16} />
+                  </Link>
+                ) : (
+                  <Link to="/auth" state={{ from: portal.href }}
+                    className="lms-btn-outline w-full flex items-center justify-center gap-2 text-sm py-3">
+                    <LogIn size={16} /> Sign In to Access
+                  </Link>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -287,42 +331,54 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredCourses.map((course) => (
-              <Link key={course.id} to="/lms/courses" className="course-card block group">
-                <div className="relative h-44 overflow-hidden">
-                  <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/images/barista.jpg'; }} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <div className="absolute top-3 left-3">
-                    {course.badge === 'free' && <span className="badge-free">Free</span>}
-                    {course.badge === 'premium' && <span className="badge-premium">⭐ Premium</span>}
-                    {course.badge === 'bestseller' && <span className="badge-bestseller">Bestseller</span>}
-                  </div>
-                  <div className="absolute bottom-3 left-3 right-3">
-                    <span className="text-xs text-white/80 font-inter bg-black/30 px-2 py-1 rounded-full">{course.category}</span>
+            {coursesLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="course-card block animate-pulse">
+                  <div className="h-44 bg-gray-200" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-100 rounded w-1/2" />
+                    <div className="h-3 bg-gray-100 rounded w-1/3" />
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-cormorant font-bold text-lg text-lms-dark leading-tight mb-2 line-clamp-2">
-                    {course.title}
-                  </h3>
-                  <p className="text-gray-500 text-sm font-inter mb-2">{course.instructor}</p>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Stars rating={Math.floor(course.rating)} />
-                    <span className="text-amber-600 text-xs font-semibold">{course.rating}</span>
-                    <span className="text-gray-400 text-xs font-inter">({course.students})</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-gray-500 text-xs font-inter">
-                      <BookOpen size={12} /> {course.duration}
+              ))
+            ) : (
+              featuredCourses.map((course) => (
+                <Link key={course.id} to={`/lms/courses/${course.id}/learn`} className="course-card block group">
+                  <div className="relative h-44 overflow-hidden">
+                    <img src={course.image_url} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/barista.jpg'; }} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <div className="absolute top-3 left-3">
+                      {course.badge === 'free' && <span className="badge-free">Free</span>}
+                      {course.badge === 'premium' && <span className="badge-premium">⭐ Premium</span>}
+                      {course.badge === 'bestseller' && <span className="badge-bestseller">Bestseller</span>}
                     </div>
-                    <span className={`font-bold ${course.price === 0 ? 'text-lms-success' : 'text-lms-dark'} font-inter`}>
-                      {course.price === 0 ? 'Free' : `$${course.price}`}
-                    </span>
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <span className="text-xs text-white/80 font-inter bg-black/30 px-2 py-1 rounded-full">{course.level}</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-4">
+                    <h3 className="font-cormorant font-bold text-lg text-lms-dark leading-tight mb-2 line-clamp-2">
+                      {course.title}
+                    </h3>
+                    <p className="text-gray-500 text-sm font-inter mb-2">{course.instructor_name}</p>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Stars rating={5} />
+                      <span className="text-gray-400 text-xs font-inter">({course.students} enrolled)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-gray-500 text-xs font-inter">
+                        <BookOpen size={12} /> {course.duration}
+                      </div>
+                      <span className={`font-bold ${course.price === 0 ? 'text-lms-success' : 'text-lms-dark'} font-inter`}>
+                        {course.price === 0 ? 'Free' : `$${course.price}`}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </section>

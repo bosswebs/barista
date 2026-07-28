@@ -3,8 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ClerkProvider, AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useState } from "react";
+
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+if (!CLERK_PUBLISHABLE_KEY) {
+  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY environment variable");
+}
 
 // Pages - Marketing Site
 import Index from "./pages/Index";
@@ -46,13 +52,14 @@ const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
               {/* ===== Marketing Site ===== */}
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
@@ -62,6 +69,7 @@ const App = () => {
               <Route path="/trainings" element={<Trainings />} />
               <Route path="/trainers" element={<Trainers />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
               <Route path="/culinary-arts" element={<CulinaryArts />} />
               <Route path="/artificial-beauty" element={<ArtificialBeauty />} />
               <Route path="/consultancy" element={<Consultancy />} />
@@ -95,6 +103,7 @@ const App = () => {
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
+    </ClerkProvider>
   );
 };
 

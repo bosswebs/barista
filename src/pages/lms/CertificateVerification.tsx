@@ -83,7 +83,7 @@ const CertificateVerification = () => {
               <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-lms-secondary/30">
                 {/* Certificate header */}
                 <div className="bg-lms-gradient p-8 text-center">
-                  <img src="/images/LOGO EGIDE new.png" alt="BBA Logo" className="h-16 w-16 object-contain mx-auto mb-3" />
+                  <img src="/images/logo.png" alt="BBA Logo" className="h-16 w-16 object-contain mx-auto mb-3" />
                   <h2 className="font-cormorant text-3xl font-bold text-white">Beyond Barista Academy</h2>
                   <p className="text-lms-secondary font-inter text-sm mt-1">Kigali, Rwanda • beyondbarista.rw</p>
                 </div>

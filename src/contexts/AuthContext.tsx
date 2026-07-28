@@ -1,154 +1,169 @@
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  useAuth as useClerkAuth,
+  useUser,
+  useSignIn,
+  useSignUp,
+  useClerk,
+} from '@clerk/clerk-react';
 import { toast } from '@/components/ui/sonner';
+import { api } from '@/lib/api';
+
+export type AppUser = {
+  id: string;
+  email: string;
+  user_metadata: {
+    full_name?: string;
+    role?: string;
+    avatar_url?: string;
+    phone?: string | null;
+  };
+};
 
 type AuthContextType = {
-  user: User | null;
-  session: Session | null;
+  user: AppUser | null;
+  session: { user: AppUser } | null;
   isLoading: boolean;
+  pendingVerification: boolean;
   signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<void>;
+  verifyEmailCode: (code: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  getToken: () => Promise<string | null>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isLoaded: isUserLoaded, user: clerkUser } = useUser();
+  const { isLoaded: isAuthLoaded, isSignedIn, getToken: clerkGetToken } = useClerkAuth();
+  const { signIn, isLoaded: isSignInLoaded, setActive: setActiveFromSignIn } = useSignIn();
+  const { signUp, isLoaded: isSignUpLoaded, setActive: setActiveFromSignUp } = useSignUp();
+  const { signOut: clerkSignOut } = useClerk();
+
+  const [pendingVerification, setPendingVerification] = useState(false);
+  // Authoritative role from Neon (via /api/me) - Clerk's own publicMetadata is
+  // never set anywhere, so it can't be trusted for role-gating. Defaults to
+  // the least-privileged role until resolved.
+  const [resolvedRole, setResolvedRole] = useState<string>('student');
+
+  const isLoading = !isUserLoaded || !isAuthLoaded;
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (event === 'SIGNED_IN') {
-          toast.success('Signed in successfully!');
-        } else if (event === 'SIGNED_OUT') {
-          toast.info('Signed out successfully');
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            phone: phone || null,
-          },
-        }
+    if (!isSignedIn || !clerkUser) {
+      setResolvedRole('student');
+      return;
+    }
+    let cancelled = false;
+    clerkGetToken().then((token) => {
+      if (!token) return;
+      return api.me(token).then((profile) => {
+        if (!cancelled) setResolvedRole(profile.role || 'student');
       });
+    }).catch(() => {
+      // Keep the safe 'student' default if role resolution fails
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn, clerkUser?.id]);
 
-      if (error) throw error;
-      toast.success('Check your email for the confirmation link');
+  const user: AppUser | null = useMemo(() => {
+    if (!isSignedIn || !clerkUser) return null;
+    return {
+      id: clerkUser.id,
+      email: clerkUser.primaryEmailAddress?.emailAddress || '',
+      user_metadata: {
+        full_name: clerkUser.fullName || clerkUser.firstName || undefined,
+        role: resolvedRole,
+        avatar_url: clerkUser.imageUrl,
+        phone: clerkUser.primaryPhoneNumber?.phoneNumber || null,
+      },
+    };
+  }, [isSignedIn, clerkUser, resolvedRole]);
+
+  const session = user ? { user } : null;
+
+  const handleSignUp = async (email: string, password: string, fullName: string, phone?: string) => {
+    if (!isSignUpLoaded) return;
+    try {
+      const [firstName, ...rest] = fullName.trim().split(' ');
+      await signUp.create({
+        emailAddress: email,
+        password,
+        firstName,
+        lastName: rest.join(' ') || undefined,
+      });
+      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      setPendingVerification(true);
+      toast.success('Check your email for a 6-digit verification code');
     } catch (error: any) {
-      toast.error(error.message || 'Error during sign up');
+      toast.error(error?.errors?.[0]?.longMessage || error.message || 'Error during sign up');
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const verifyEmailCode = async (code: string) => {
+    if (!isSignUpLoaded) return;
     try {
-      setIsLoading(true);
-      
-      // Special handle for Demo Admin / Demo Student credentials if Supabase auth is not seeded yet
-      if (email === 'admin@beyondbarista.rw' || email === 'jp@beyondbarista.rw') {
-        const mockAdminUser: any = {
-          id: 'admin-user-001',
-          email: 'admin@beyondbarista.rw',
-          user_metadata: {
-            full_name: 'Jean-Paul Nkurunziza (Super Admin)',
-            role: 'admin',
-            avatar_url: '/images/LOGO EGIDE new.png'
-          }
-        };
-        setUser(mockAdminUser);
-        setSession({ user: mockAdminUser } as any);
-        toast.success('Signed in as Super Admin!');
-        return;
+      const result = await signUp.attemptEmailAddressVerification({ code });
+      if (result.status === 'complete') {
+        await setActiveFromSignUp({ session: result.createdSessionId });
+        setPendingVerification(false);
+        toast.success('Account verified! Welcome to Beyond Barista Academy.');
+      } else {
+        toast.error('Verification incomplete. Please try again.');
       }
-
-      if (email === 'student@beyondbarista.rw') {
-        const mockStudentUser: any = {
-          id: 'student-user-001',
-          email: 'student@beyondbarista.rw',
-          user_metadata: {
-            full_name: 'Marie Uwase (Student)',
-            role: 'student',
-          }
-        };
-        setUser(mockStudentUser);
-        setSession({ user: mockStudentUser } as any);
-        toast.success('Signed in as Student!');
-        return;
-      }
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
     } catch (error: any) {
-      toast.error(error.message || 'Error during sign in');
+      toast.error(error?.errors?.[0]?.longMessage || error.message || 'Invalid verification code');
       throw error;
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  const handleSignIn = async (email: string, password: string) => {
+    if (!isSignInLoaded) return;
+    try {
+      const result = await signIn.create({ identifier: email, password });
+      if (result.status === 'complete') {
+        await setActiveFromSignIn({ session: result.createdSessionId });
+        toast.success('Signed in successfully!');
+      } else {
+        toast.error('Sign in incomplete. Please try again.');
+      }
+    } catch (error: any) {
+      toast.error(error?.errors?.[0]?.longMessage || error.message || 'Error during sign in');
+      throw error;
     }
   };
 
   const signInWithGoogle = async () => {
+    if (!isSignInLoaded) return;
     try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-        },
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectUrlComplete: '/lms',
       });
-      
-      if (error) throw error;
     } catch (error: any) {
       toast.error(error.message || 'Error signing in with Google');
       throw error;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await clerkSignOut();
+      toast.info('Signed out successfully');
     } catch (error: any) {
       toast.error(error.message || 'Error during sign out');
-    } finally {
-      setIsLoading(false);
     }
+  };
+
+  const getToken = async () => {
+    if (!isSignedIn) return null;
+    return clerkGetToken();
   };
 
   return (
@@ -157,10 +172,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         session,
         isLoading,
-        signUp,
-        signIn,
+        pendingVerification,
+        signUp: handleSignUp,
+        verifyEmailCode,
+        signIn: handleSignIn,
         signInWithGoogle,
-        signOut
+        signOut,
+        getToken,
       }}
     >
       {children}

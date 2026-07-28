@@ -1,0 +1,76 @@
+// Thin client for the /api/* Vercel serverless functions backed by Neon.
+// Replaces direct supabase.from(...) calls now that Neon has no RLS - all
+// authorization happens server-side in the API routes using the Clerk token.
+
+const API_BASE = '/api';
+
+type RequestOptions = {
+  method?: string;
+  body?: any;
+  token?: string | null;
+};
+
+async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { method = 'GET', body, token } = options;
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`;
+    try {
+      const errBody = await res.json();
+      if (errBody?.error) message = errBody.error;
+    } catch {
+      // response wasn't JSON - keep the generic message
+    }
+    throw new Error(message);
+  }
+
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
+export const api = {
+  me: (token: string) => request<{ id: string; email: string; name: string; role: string }>('/me', { token }),
+  courses: {
+    list: (token?: string | null) => request<any[]>('/courses', { token }),
+    get: (id: string, token?: string | null) => request<any>(`/courses/${id}`, { token }),
+    create: (data: any, token: string) => request<any>('/courses', { method: 'POST', body: data, token }),
+    update: (id: string, data: any, token: string) =>
+      request<any>(`/courses/${id}`, { method: 'PATCH', body: data, token }),
+    remove: (id: string, token: string) => request<void>(`/courses/${id}`, { method: 'DELETE', token }),
+  },
+  modules: {
+    create: (data: any, token: string) => request<any>('/modules', { method: 'POST', body: data, token }),
+    update: (id: string, data: any, token: string) =>
+      request<any>(`/modules/${id}`, { method: 'PATCH', body: data, token }),
+    remove: (id: string, token: string) => request<void>(`/modules/${id}`, { method: 'DELETE', token }),
+  },
+  lessons: {
+    create: (data: any, token: string) => request<any>('/lessons', { method: 'POST', body: data, token }),
+    update: (id: string, data: any, token: string) =>
+      request<any>(`/lessons/${id}`, { method: 'PATCH', body: data, token }),
+    remove: (id: string, token: string) => request<void>(`/lessons/${id}`, { method: 'DELETE', token }),
+  },
+  enrollments: {
+    mine: (token: string) => request<any[]>('/enrollments', { token }),
+    enroll: (courseId: string, token: string) =>
+      request<any>('/enrollments', { method: 'POST', body: { course_id: courseId }, token }),
+  },
+  progress: {
+    forCourse: (courseId: string, token: string) =>
+      request<{ completed_lesson_ids: string[] }>(`/progress?course_id=${courseId}`, { token }),
+    markComplete: (lessonId: string, token: string) =>
+      request<any>('/progress', { method: 'POST', body: { lesson_id: lessonId }, token }),
+  },
+  instructor: {
+    courses: (token: string) => request<any[]>('/instructor/courses', { token }),
+  },
+};

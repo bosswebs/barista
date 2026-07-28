@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { BARISTA_CURRICULUM } from '@/data/baristaCurriculum';
+import { ORIENTATION_CURRICULUM } from '@/data/orientationCurriculum';
 
 // Initial Mock Data Stores
 const initialUsers = [
@@ -50,6 +51,7 @@ const initialTransactions = [
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'users' | 'certificates' | 'jobs' | 'events' | 'blog' | 'payments' | 'settings'>('overview');
+  const [curriculumView, setCurriculumView] = useState<'orientation' | 'barista'>('orientation');
   const [search, setSearch] = useState('');
   
   // Data state
@@ -289,19 +291,44 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* TAB 2: 24 BARISTA MODULES CURRICULUM MANAGER */}
+          {/* TAB 2: CURRICULUM MANAGER (ORIENTATION + 24 BARISTA MODULES) */}
           {activeTab === 'curriculum' && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="font-cormorant text-2xl font-bold text-lms-dark">Professional Barista Mastery (24 Modules + Final Exam)</h3>
-                  <p className="text-xs text-gray-500">Manage all 24 curriculum modules, lesson reading text, YouTube videos, and quizzes</p>
+                  <h3 className="font-cormorant text-2xl font-bold text-lms-dark">
+                    {curriculumView === 'orientation'
+                      ? 'Orientation: Welcome to Beyond Barista Academy (14 Lessons)'
+                      : 'Professional Barista Mastery (24 Modules + Final Exam)'}
+                  </h3>
+                  <p className="text-xs text-gray-500">Manage curriculum modules, lesson reading text, YouTube videos, and quizzes</p>
                 </div>
-                <span className="badge-premium">24 Modules Active</span>
+                <span className="badge-premium">
+                  {curriculumView === 'orientation' ? '14 Lessons Active' : '24 Modules Active'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 mb-6">
+                <button
+                  onClick={() => setCurriculumView('orientation')}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold font-inter transition-all ${
+                    curriculumView === 'orientation' ? 'bg-lms-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Orientation
+                </button>
+                <button
+                  onClick={() => setCurriculumView('barista')}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold font-inter transition-all ${
+                    curriculumView === 'barista' ? 'bg-lms-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Barista Program
+                </button>
               </div>
 
               <div className="space-y-4">
-                {BARISTA_CURRICULUM.map((mod) => (
+                {(curriculumView === 'orientation' ? ORIENTATION_CURRICULUM : BARISTA_CURRICULUM).map((mod) => (
                   <div key={mod.id} className="p-4 rounded-xl border border-gray-200 bg-lms-bg hover:border-lms-primary/40 transition-all">
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2">

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Menu, X, UserCircle, LogOut, BookOpen, LayoutDashboard,
+  Menu, X, UserCircle, LogOut, BookOpen,
   ChevronDown, Briefcase, Calendar, Rss, Star, Crown,
   GraduationCap, Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAvailablePortals } from '@/lib/portals';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -38,6 +39,7 @@ const Navbar = () => {
   const [isDark, setIsDark] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const portals = getAvailablePortals(user?.user_metadata?.role);
 
   const getInitials = (name?: string) => {
     if (!name) return 'BBA';
@@ -66,7 +68,7 @@ const Navbar = () => {
       <div className="container-custom flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img src="/images/LOGO EGIDE new.png" alt="BBA Logo" className="h-10 w-10 object-contain" />
+          <img src="/images/logo.png" alt="BBA Logo" className="h-10 w-10 object-contain" />
           <div className="hidden sm:block">
             <span className="font-cormorant text-xl font-bold text-bba-brown leading-tight block">Beyond Barista</span>
             <span className="text-xs text-gray-500 font-inter tracking-widest uppercase">Academy Rwanda</span>
@@ -148,24 +150,14 @@ const Navbar = () => {
                   {user?.user_metadata?.full_name || 'My Account'}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/lms" className="cursor-pointer w-full flex items-center gap-2">
-                    <BookOpen className="h-4 w-4 text-lms-primary" />
-                    <span>Student Dashboard</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/lms/instructor" className="cursor-pointer w-full flex items-center gap-2">
-                    <LayoutDashboard className="h-4 w-4 text-lms-primary" />
-                    <span>Instructor Dashboard</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/lms/admin" className="cursor-pointer w-full flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-lms-primary" />
-                    <span>Admin Panel</span>
-                  </Link>
-                </DropdownMenuItem>
+                {portals.map((portal) => (
+                  <DropdownMenuItem key={portal.href} asChild>
+                    <Link to={portal.href} className="cursor-pointer w-full flex items-center gap-2">
+                      <portal.icon className="h-4 w-4 text-lms-primary" />
+                      <span>{portal.title}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()} className="text-red-600 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
@@ -228,9 +220,12 @@ const Navbar = () => {
                     </Avatar>
                     <span className="font-medium text-sm text-gray-800">{user?.user_metadata?.full_name || user.email}</span>
                   </div>
-                  <Link to="/lms" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl">
-                    <BookOpen size={16} className="text-lms-primary" /> Student Dashboard
-                  </Link>
+                  {portals.map((portal) => (
+                    <Link key={portal.href} to={portal.href}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl">
+                      <portal.icon size={16} className="text-lms-primary" /> {portal.title}
+                    </Link>
+                  ))}
                   <button onClick={() => signOut()}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl">
                     <LogOut size={16} /> Log out

@@ -4,10 +4,10 @@ import { BookOpen, Clock, Award, PlayCircle, AlertCircle, Flame, Trophy, Briefca
 import Layout from "@/components/layout/Layout";
 import SectionTitle from "@/components/ui/SectionTitle";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 
 const LMSDashboard = () => {
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [certificatesCount, setCertificatesCount] = useState(0);
@@ -19,49 +19,10 @@ const LMSDashboard = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const { data: enrollments, error: enrollErr } = await supabase
-          .from('enrollments')
-          .select(`*, courses (id, title, description, image_url)`)
-          .eq('user_id', user.id);
+        const token = await getToken();
+        if (!token) throw new Error("Not signed in");
+        const validCourses = await api.enrollments.mine(token);
 
-        if (enrollErr) throw enrollErr;
-
-        const coursesWithProgress = await Promise.all(
-          (enrollments || []).map(async (enrollment) => {
-            const course = enrollment.courses as any;
-            if (!course) return null;
-
-            const { data: modules } = await supabase
-              .from('modules')
-              .select('id, lessons(id)')
-              .eq('course_id', course.id);
-
-            const allLessonIds = (modules || []).flatMap(
-              (m: any) => (m.lessons || []).map((l: any) => l.id)
-            );
-            const totalLessons = allLessonIds.length;
-
-            let progressPct = 0;
-            if (totalLessons > 0) {
-              const { data: progress } = await supabase
-                .from('user_progress')
-                .select('id')
-                .eq('user_id', user.id)
-                .eq('completed', true)
-                .in('lesson_id', allLessonIds);
-
-              progressPct = Math.round(((progress?.length || 0) / totalLessons) * 100);
-            }
-
-            return {
-              ...course,
-              progress: progressPct,
-              enrolled_at: enrollment.enrolled_at,
-            };
-          })
-        );
-
-        const validCourses = coursesWithProgress.filter(Boolean);
         setEnrolledCourses(validCourses);
         setCertificatesCount(validCourses.filter((c) => c.progress === 100).length);
       } catch (err: any) {
