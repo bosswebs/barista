@@ -1,188 +1,250 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Edit, Trash2, Users, BookOpen, AlertCircle, RefreshCw } from "lucide-react";
+import {
+  Plus, Edit, Trash2, Users, BookOpen, Sparkles, Video, CheckCircle,
+  HelpCircle, MessageSquare, Award, BarChart3, Clock, AlertCircle, RefreshCw
+} from "lucide-react";
 import Layout from "@/components/layout/Layout";
-import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/lib/api";
+import RoleSwitcher from "@/components/lms/RoleSwitcher";
+import AIAssistantModal from "@/components/lms/AIAssistantModal";
+import LiveClassModal from "@/components/lms/LiveClassModal";
 import { toast } from "sonner";
 
-const InstructorDashboard = () => {
-  const { user, getToken } = useAuth();
-  const [courses, setCourses] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const InstructorDashboard = () => {
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [aiModalInitialMode, setAiModalInitialMode] = useState<'quiz' | 'outline' | 'grading'>('quiz');
+  const [isLiveClassModalOpen, setIsLiveClassModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (user) fetchCourses();
-  }, [user]);
+  const [instructorCourses, setInstructorCourses] = useState([
+    { id: 'c1', title: 'Professional Barista Mastery Program', students: 1420, modules: 24, rating: 4.9, status: 'Published' },
+    { id: 'c2', title: 'Espresso Mechanics & Calibration', students: 380, modules: 6, rating: 4.8, status: 'Published' },
+    { id: 'c3', title: 'Advanced Mixology & Cocktail Design', students: 210, modules: 8, rating: 5.0, status: 'Draft' },
+  ]);
 
-  const fetchCourses = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const token = await getToken();
-      if (!token) throw new Error("Not signed in");
-      const coursesWithCounts = await api.instructor.courses(token);
-      setCourses(coursesWithCounts);
-    } catch (err: any) {
-      console.error("Error fetching courses:", err);
-      setError("Could not load your courses. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const studentSubmissions = [
+    { id: 'sub1', student: 'Marie Uwase', course: 'Espresso Mechanics', assignment: 'Module 06: Extraction Yield Essay', submitted: '2 hours ago', status: 'Pending Review' },
+    { id: 'sub2', student: 'Emmanuel Nkusi', course: 'Barista Mastery', assignment: 'Module 12: Latte Art Video Upload', submitted: '5 hours ago', status: 'Pending Review' },
+  ];
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!window.confirm(`Delete "${title}"? This will also remove all modules, lessons, and student enrollments. This cannot be undone.`)) return;
-
-    try {
-      const token = await getToken();
-      if (!token) throw new Error("Not signed in");
-      await api.courses.remove(id, token);
-
-      setCourses(courses.filter((c) => c.id !== id));
-      toast.success("Course deleted successfully.");
-    } catch (err: any) {
-      toast.error("Failed to delete course: " + err.message);
-    }
+  const handleGradeSubmission = (studentName: string) => {
+    setAiModalInitialMode('grading');
+    setIsAiModalOpen(true);
+    toast.info(`Opening AI Grading Assistant for ${studentName}'s submission.`);
   };
 
   return (
     <Layout>
-      <div className="bg-gray-900 text-white py-12">
+      <RoleSwitcher currentRole="instructor" />
+
+      <div className="min-h-screen bg-lms-bg font-inter pt-8 pb-16">
         <div className="container-custom">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Instructor Dashboard</h1>
-              <p className="text-gray-400">Manage your Barista courses and students</p>
+
+          {/* Header Banner */}
+          <div className="bg-slate-900 text-white rounded-3xl p-8 mb-8 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-teal-500/20 text-teal-300 rounded-full text-xs font-bold mb-2">
+                  <BookOpen size={14} /> Instructor Command Center
+                </span>
+                <h1 className="font-cormorant text-4xl md:text-5xl font-bold">Faculty Teaching & AI Suite</h1>
+                <p className="text-slate-300 text-sm mt-1">Course authoring, AI quiz generation, Zoom live classes, student grading & progress tracking.</p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    setAiModalInitialMode('quiz');
+                    setIsAiModalOpen(true);
+                  }}
+                  className="bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-bold text-xs py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-lg"
+                >
+                  <Sparkles size={16} /> AI Pedagogy Tools
+                </button>
+                <button
+                  onClick={() => setIsLiveClassModalOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-lg"
+                >
+                  <Video size={16} /> Schedule Live Class
+                </button>
+                <Link
+                  to="/lms/instructor/courses/new"
+                  className="lms-btn-primary text-xs py-2.5 flex items-center gap-1.5"
+                >
+                  <Plus size={16} /> Create Course
+                </Link>
+              </div>
             </div>
-            <Link
-              to="/lms/instructor/courses/new"
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus size={20} /> Create New Course
-            </Link>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-            <div className="bg-white/10 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Total Courses</p>
-              <p className="text-2xl font-bold mt-1">{courses.length}</p>
+          {/* Stats Bar */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center mb-3">
+                <BookOpen size={20} />
+              </div>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">My Active Courses</p>
+              <h3 className="font-cormorant font-bold text-2xl text-lms-dark mt-0.5">{instructorCourses.length}</h3>
+              <p className="text-[11px] text-teal-600 font-semibold mt-1">38 Total Modules</p>
             </div>
-            <div className="bg-white/10 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Total Students</p>
-              <p className="text-2xl font-bold mt-1">
-                {courses.reduce((sum, c) => sum + (c.students || 0), 0)}
-              </p>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                <Users size={20} />
+              </div>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Enrolled Students</p>
+              <h3 className="font-cormorant font-bold text-2xl text-lms-dark mt-0.5">2,010</h3>
+              <p className="text-[11px] text-emerald-600 font-semibold mt-1">94% Completion Rate</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                <Clock size={20} />
+              </div>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Pending Grading</p>
+              <h3 className="font-cormorant font-bold text-2xl text-lms-dark mt-0.5">{studentSubmissions.length}</h3>
+              <p className="text-[11px] text-amber-600 font-semibold mt-1">AI Grading Recommended</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
+                <Award size={20} />
+              </div>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Certificates Approved</p>
+              <h3 className="font-cormorant font-bold text-2xl text-lms-dark mt-0.5">148</h3>
+              <p className="text-[11px] text-purple-600 font-semibold mt-1">QR Verification Active</p>
             </div>
           </div>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Left 2 Cols: Course Management */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="font-cormorant text-2xl font-bold text-lms-dark flex items-center gap-2">
+                    <BookOpen className="text-lms-primary" size={22} /> Course & Curriculum Authoring
+                  </h2>
+                  <Link to="/lms/instructor/courses/new" className="text-xs text-lms-primary font-bold hover:underline">
+                    + Add New Module
+                  </Link>
+                </div>
+
+                <div className="space-y-4">
+                  {instructorCourses.map((c) => (
+                    <div key={c.id} className="p-4 rounded-xl border border-gray-200 bg-lms-bg hover:border-lms-primary/40 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-cormorant font-bold text-lg text-lms-dark">{c.title}</h3>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            c.status === 'Published' ? 'badge-free' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {c.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 font-inter">
+                          👥 {c.students} Learners • 📚 {c.modules} Modules • ⭐ {c.rating} Rating
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs font-inter">
+                        <button
+                          onClick={() => {
+                            setAiModalInitialMode('quiz');
+                            setIsAiModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 bg-teal-50 text-teal-700 rounded-lg font-bold hover:bg-teal-100 flex items-center gap-1"
+                        >
+                          <Sparkles size={12} /> AI Quiz
+                        </button>
+                        <Link
+                          to={`/lms/instructor/courses/${c.id}/edit`}
+                          className="px-3 py-1.5 bg-lms-primary text-white rounded-lg font-bold hover:opacity-90 flex items-center gap-1"
+                        >
+                          <Edit size={12} /> Edit
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pending Student Submissions */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="font-cormorant text-2xl font-bold text-lms-dark mb-4 flex items-center gap-2">
+                  <CheckCircle className="text-emerald-600" size={22} /> Pending Student Submissions
+                </h2>
+                
+                <div className="space-y-3 font-inter text-xs">
+                  {studentSubmissions.map((sub) => (
+                    <div key={sub.id} className="p-4 bg-lms-bg rounded-xl border border-gray-200 flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-gray-900">{sub.student} — <span className="text-lms-primary">{sub.assignment}</span></p>
+                        <p className="text-gray-500 text-[11px] mt-0.5">Submitted: {sub.submitted} • {sub.course}</p>
+                      </div>
+                      <button
+                        onClick={() => handleGradeSubmission(sub.student)}
+                        className="bg-gradient-to-r from-teal-500 to-emerald-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1"
+                      >
+                        <Sparkles size={13} /> Grade with AI
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Col: Live Classes & Discussion Moderation */}
+            <div className="space-y-6">
+              {/* Upcoming Live Classes Widget */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm font-inter text-xs space-y-3">
+                <h3 className="font-cormorant font-bold text-xl text-lms-dark flex items-center gap-2">
+                  <Video className="text-blue-600" size={20} /> Scheduled Live Webinars
+                </h3>
+                <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-blue-900">
+                  <p className="font-bold">Espresso Calibration Masterclass</p>
+                  <p className="text-[11px] text-gray-500 mt-1">Aug 12, 2026 at 14:00 CAT • Zoom</p>
+                  <a href="https://zoom.us/j/9812401824" target="_blank" rel="noreferrer" className="block text-[11px] text-blue-700 font-bold underline mt-2">
+                    Launch Zoom Meeting →
+                  </a>
+                </div>
+                <button onClick={() => setIsLiveClassModalOpen(true)} className="w-full lms-btn-outline py-2 text-xs">
+                  + Schedule Another Webinar
+                </button>
+              </div>
+
+              {/* Discussion Forum Widget */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm font-inter text-xs space-y-3">
+                <h3 className="font-cormorant font-bold text-xl text-lms-dark flex items-center gap-2">
+                  <MessageSquare className="text-teal-600" size={20} /> Student Q&A Forum
+                </h3>
+                <div className="space-y-2">
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <p className="font-bold text-gray-800">Marie U.: "What causes channeling in VST baskets?"</p>
+                    <p className="text-gray-400 text-[10px] mt-0.5">3 replies • Pending Instructor Verification</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
 
-      <section className="section-padding bg-gray-50 min-h-[60vh]">
-        <div className="container-custom">
+      {/* AI Assistant Modal */}
+      <AIAssistantModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        initialMode={aiModalInitialMode}
+      />
 
-          {error && (
-            <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
-              <AlertCircle size={20} />
-              <span>{error}</span>
-              <button
-                onClick={fetchCourses}
-                className="ml-auto flex items-center gap-1 text-sm underline"
-              >
-                <RefreshCw size={14} /> Retry
-              </button>
-            </div>
-          )}
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <BookOpen className="text-bba-brown" /> My Courses
-              </h2>
-              {!isLoading && (
-                <button
-                  onClick={fetchCourses}
-                  className="text-gray-500 hover:text-bba-brown p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  title="Refresh"
-                >
-                  <RefreshCw size={18} />
-                </button>
-              )}
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center py-16">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-bba-brown"></div>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-500 text-sm">
-                      <th className="p-4 font-medium">Course Title</th>
-                      <th className="p-4 font-medium">Students</th>
-                      <th className="p-4 font-medium">Created</th>
-                      <th className="p-4 font-medium text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {courses.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="p-10 text-center text-gray-500">
-                          <BookOpen size={36} className="mx-auto text-gray-300 mb-3" />
-                          <p className="font-medium">You haven't created any courses yet.</p>
-                          <Link
-                            to="/lms/instructor/courses/new"
-                            className="inline-flex items-center gap-1 mt-3 text-bba-brown font-medium hover:underline"
-                          >
-                            <Plus size={16} /> Create your first course
-                          </Link>
-                        </td>
-                      </tr>
-                    ) : (
-                      courses.map((course) => (
-                        <tr key={course.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="p-4 font-medium text-gray-800">{course.title}</td>
-                          <td className="p-4 text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <Users size={16} /> {course.students}
-                            </span>
-                          </td>
-                          <td className="p-4 text-gray-600 text-sm">
-                            {new Date(course.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="p-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <Link
-                                to={`/lms/instructor/courses/${course.id}/edit`}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title="Edit Course"
-                              >
-                                <Edit size={18} />
-                              </Link>
-                              <button
-                                onClick={() => handleDelete(course.id, course.title)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                title="Delete Course"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-        </div>
-      </section>
+      {/* Live Class Modal */}
+      <LiveClassModal
+        isOpen={isLiveClassModalOpen}
+        onClose={() => setIsLiveClassModalOpen(false)}
+      />
     </Layout>
   );
 };

@@ -49,8 +49,8 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-02',
     moduleNumber: 2,
-    title: 'Module 02: Brewing Science',
-    description: 'Master the physics and chemistry of coffee extraction, brew ratios, grind particle size distribution, contact time, and agitation.',
+    title: 'Module 02: Brewing',
+    description: 'Master the physics and chemistry of coffee extraction, brew ratios, grind particle size distribution, contact time, water temperature, and manual pour-over devices.',
     lessons: [
       {
         id: 'les-02-01',
@@ -155,8 +155,8 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-06',
     moduleNumber: 6,
-    title: 'Module 06: Barista Skills & Espresso Mechanics',
-    description: 'Master commercial espresso machine operation, grinder calibration, dose distribution, level tamping, and microfoam texturing.',
+    title: 'Module 06: Barista Skills',
+    description: 'Master commercial espresso machine operation, grinder calibration, dose distribution, level tamping, microfoam texturing, and latte art execution.',
     lessons: [
       {
         id: 'les-06-01',
@@ -201,7 +201,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-08',
     moduleNumber: 8,
-    title: 'Module 08: Customer Service & Barista Professionalism',
+    title: 'Module 08: Customer Service and Barista Professionalism',
     description: 'Deliver hospitable, memorable customer service, handle customer complaints, maintain professional grooming, and uphold hospitality ethics.',
     lessons: [
       {
@@ -224,7 +224,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-09',
     moduleNumber: 9,
-    title: 'Module 09: Menu & Recipe Development',
+    title: 'Module 09: Menu and Recipe Development',
     description: 'Design profitable coffee menus, calculate food & beverage cost percentages, standardise drink specs, and create seasonal specials.',
     lessons: [
       {
@@ -246,7 +246,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-10',
     moduleNumber: 10,
-    title: 'Module 10: Prepare Iced and Specialty Drinks',
+    title: 'Module 10: Prepare Iced and Specialty Drink',
     description: 'Craft iced lattes, cold brew extractions, nitro cold brew, frappés, macchiatos, and artisanal flavored signature syrups.',
     lessons: [
       {
@@ -269,7 +269,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-11',
     moduleNumber: 11,
-    title: 'Module 11: Basic Cooking Skills for Café Baristas',
+    title: 'Module 11: Basic Cooking Skills',
     description: 'Learn fundamental culinary knife skills, toasties, breakfast sandwiches, egg preparation, and light café food menu items.',
     lessons: [
       {
@@ -292,7 +292,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-12',
     moduleNumber: 12,
-    title: 'Module 12: Prepare Ice Cream & Affogato Specialties',
+    title: 'Module 12: Prepare Ice Cream',
     description: 'Understand gelato & ice cream base formulations, churn temperatures, and classic Affogato al Caffè preparation.',
     lessons: [
       {
@@ -315,7 +315,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-13',
     moduleNumber: 13,
-    title: 'Module 13: Prepare & Understand Drinking Water for Coffee',
+    title: 'Module 13: Prepare and Understand Drink Water',
     description: 'Analyze water chemistry for coffee: Total Hardness, Calcium/Magnesium ions, Total Alkalinity, pH levels, and Reverse Osmosis (RO) filtration.',
     lessons: [
       {
@@ -337,7 +337,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-14',
     moduleNumber: 14,
-    title: 'Module 14: Prepare Welcoming Drinks & Food Pairing',
+    title: 'Module 14: Prepare Welcoming Drink and Food Pairing',
     description: 'Design non-alcoholic welcome aperitifs, palate cleansers, and harmonize acidity/sweetness between pastry items and specific coffee origins.',
     lessons: [
       {
@@ -360,7 +360,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-15',
     moduleNumber: 15,
-    title: 'Module 15: Prepare Hot & Cold Non-Coffee Beverages',
+    title: 'Module 15: Prepare Hot and Cold Beverages',
     description: 'Master Loose-Leaf Teas, Matcha Lattes, Chai Lattes, Artisan Hot Chocolates, and Golden Turmeric Milk.',
     lessons: [
       {
@@ -383,12 +383,12 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-16',
     moduleNumber: 16,
-    title: 'Module 16: Cleaning & Maintenance of Machine & Grinder',
+    title: 'Module 16: Cleaning and Maintenance of Espresso Machine and Grinder',
     description: 'Preventative daily, weekly, and monthly maintenance routines for commercial espresso machines, steam wands, and flat/conical grinder burrs.',
     lessons: [
       {
         id: 'les-16-01',
-        title: '16.1 Daily Backflossing & Chemical Portafilter Bath Routine',
+        title: '16.1 Daily Backflushing & Chemical Portafilter Bath Routine',
         duration: '20 mins',
         type: 'video',
         videoUrl: 'https://www.youtube.com/watch?v=5X4x9X2zW10',
@@ -406,7 +406,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-17',
     moduleNumber: 17,
-    title: 'Module 17: Tobacco & Cigar Service in Luxury Hospitality',
+    title: 'Module 17: Tabaco and Cigar Service',
     description: 'Understand premium cigar vitolas, humidor humidity control (70% RH), cigar cutting, lighting etiquette, and coffee/cigar pairings.',
     lessons: [
       {
@@ -429,7 +429,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-18',
     moduleNumber: 18,
-    title: 'Module 18: POS | Point of Sale Operations & Cash Handling',
+    title: 'Module 18: POS | Point of Sales Operations',
     description: 'Operate modern cloud POS systems (Square, Lightspeed, Odoo), process card/mobile money payments, manage shift split tills, and end-of-day Z-reports.',
     lessons: [
       {
@@ -452,7 +452,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-19',
     moduleNumber: 19,
-    title: 'Module 19: Coffee Mixology & Cold Brew Cocktails',
+    title: 'Module 19: Coffee Mixology',
     description: 'Combine specialty coffee with spirits, bitters, liqueurs, and citrus. Master the Espresso Martini, Irish Coffee, and Coffee Negroni.',
     lessons: [
       {
@@ -476,7 +476,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-20',
     moduleNumber: 20,
-    title: 'Module 20: Home Barista & Compact Equipment Setup',
+    title: 'Module 20: Home Barista',
     description: 'Guide home enthusiasts on single-boiler espresso machines, manual hand grinders, water kettle temperature control, and budget accessories.',
     lessons: [
       {
@@ -498,7 +498,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-21',
     moduleNumber: 21,
-    title: 'Module 21: Interview Performance & Public Speaking',
+    title: 'Module 21: Interview Performance and Public Speaking',
     description: 'Prepare for high-level hospitality job interviews, practical barista tryouts, confident body language, and professional speech delivery.',
     lessons: [
       {
@@ -521,7 +521,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-22',
     moduleNumber: 22,
-    title: 'Module 22: Personal Branding for Hospitality Professionals',
+    title: 'Module 22: Personal Branding',
     description: 'Build your digital barista portfolio on LinkedIn & Instagram, create a stand-out CV, network with industry leaders, and enter competitions.',
     lessons: [
       {
@@ -543,7 +543,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-23',
     moduleNumber: 23,
-    title: 'Module 23: Rwandan Barista & Coffee Culture',
+    title: 'Module 23: Rwandan Barista and Coffee Culture',
     description: 'Celebrate Rwanda\'s coffee heritage — from Huye Mountain & Lake Kivu washing stations to Kigali\'s vibrant specialty coffee house revolution.',
     lessons: [
       {
@@ -566,7 +566,7 @@ export const BARISTA_CURRICULUM: BaristaModule[] = [
   {
     id: 'mod-24',
     moduleNumber: 24,
-    title: 'Module 24: Beverage Entrepreneurship & Café Business Model',
+    title: 'Module 24: Beverage Entrepreneurship',
     description: 'Learn how to start, finance, and run your own profitable coffee shop or mobile coffee cart in East Africa.',
     lessons: [
       {
