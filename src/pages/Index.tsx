@@ -7,7 +7,8 @@ import { PORTALS, getAvailablePortals } from '@/lib/portals';
 import {
   Coffee, UtensilsCrossed, Wine, Star, Users, Award, BookOpen,
   Briefcase, Calendar, ArrowRight, Play, CheckCircle, ChevronLeft,
-  ChevronRight, Sparkles, TrendingUp, Globe, Shield, LogIn
+  ChevronRight, Sparkles, TrendingUp, Globe, Shield, LogIn,
+  GraduationCap, Leaf, FlaskConical, Home, ShoppingBag, Trophy, Wheat
 } from 'lucide-react';
 
 // ============ DATA ============
@@ -19,14 +20,18 @@ const stats = [
 ];
 
 const categories = [
-  { name: 'Professional Barista', icon: Coffee, count: 8, color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { name: 'Food & Beverage', icon: UtensilsCrossed, count: 6, color: 'bg-orange-50 text-orange-700 border-orange-200' },
-  { name: 'Restaurant Service', icon: Star, count: 5, color: 'bg-red-50 text-red-700 border-red-200' },
-  { name: 'Bartending & Mixology', icon: Wine, count: 4, color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { name: 'Hospitality Management', icon: Globe, count: 7, color: 'bg-lms-primary/10 text-lms-primary border-lms-secondary/30' },
-  { name: 'Hotel Operations', icon: Shield, count: 6, color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { name: 'HACCP & Food Safety', icon: CheckCircle, count: 3, color: 'bg-green-50 text-green-700 border-green-200' },
-  { name: 'Entrepreneurship', icon: TrendingUp, count: 4, color: 'bg-teal-50 text-teal-700 border-teal-200' },
+  { name: 'Orientation',                                       icon: GraduationCap,    count: 2,  color: 'bg-slate-50 text-slate-700 border-slate-200' },
+  { name: 'Barista',                                           icon: Coffee,           count: 8,  color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { name: 'Bartender',                                         icon: Wine,             count: 5,  color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { name: 'Sommelier',                                         icon: FlaskConical,     count: 4,  color: 'bg-rose-50 text-rose-700 border-rose-200' },
+  { name: 'Culinary Arts',                                     icon: UtensilsCrossed,  count: 6,  color: 'bg-orange-50 text-orange-700 border-orange-200' },
+  { name: 'Domestic Hospitality',                              icon: Home,             count: 4,  color: 'bg-sky-50 text-sky-700 border-sky-200' },
+  { name: 'Food Safety',                                       icon: CheckCircle,      count: 3,  color: 'bg-green-50 text-green-700 border-green-200' },
+  { name: 'Workplace Skills & Professional Competency',        icon: Briefcase,        count: 5,  color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { name: 'Herbalism',                                         icon: Leaf,             count: 3,  color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { name: 'Bonus & BBA Specialty Courses',                     icon: Star,             count: 6,  color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  { name: 'Other Services',                                    icon: ShoppingBag,      count: 4,  color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  { name: 'National Programs, Initiatives & Championships',    icon: Trophy,           count: 3,  color: 'bg-lms-primary/10 text-lms-primary border-lms-secondary/30' },
 ];
 
 const testimonials = [
@@ -298,12 +303,12 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {categories.map((cat) => (
               <Link key={cat.name} to="/lms/courses"
                 className={`p-5 rounded-2xl border-2 ${cat.color} hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}>
                 <cat.icon size={28} className="mb-3" />
-                <h3 className="font-cormorant font-bold text-lg leading-tight mb-1">{cat.name}</h3>
+                <h3 className="font-cormorant font-bold text-base leading-tight mb-1">{cat.name}</h3>
                 <p className="text-xs opacity-70 font-inter">{cat.count} courses</p>
               </Link>
             ))}
