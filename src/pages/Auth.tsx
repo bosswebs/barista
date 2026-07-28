@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { PORTALS } from '@/lib/portals';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +42,7 @@ const Auth = () => {
   const { user, isLoading, signIn, signUp, signInWithGoogle, pendingVerification, verifyEmailCode } = useAuth();
   const location = useLocation();
   const redirectTo = (location.state as { from?: string } | null)?.from || '/';
+  const fromPortal = PORTALS.find((p) => p.href === redirectTo);
   const [activeTab, setActiveTab] = useState('login');
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -120,9 +122,15 @@ const Auth = () => {
           <TabsContent value="login">
             <Card>
               <CardHeader>
-                <CardTitle>Login</CardTitle>
+                {fromPortal && (
+                  <div className="flex items-center gap-2 mb-1 text-bba-brown">
+                    <fromPortal.icon size={18} />
+                    <span className="text-xs font-semibold uppercase tracking-wide">{fromPortal.title}</span>
+                  </div>
+                )}
+                <CardTitle>{fromPortal ? `Sign in to your ${fromPortal.title}` : 'Login'}</CardTitle>
                 <CardDescription>
-                  Enter your credentials to access your account
+                  {fromPortal ? fromPortal.description : 'Enter your credentials to access your account'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -211,13 +219,33 @@ const Auth = () => {
           <TabsContent value="signup">
             <Card>
               <CardHeader>
-                <CardTitle>Create an account</CardTitle>
+                {fromPortal && (
+                  <div className="flex items-center gap-2 mb-1 text-bba-brown">
+                    <fromPortal.icon size={18} />
+                    <span className="text-xs font-semibold uppercase tracking-wide">{fromPortal.title}</span>
+                  </div>
+                )}
+                <CardTitle>{fromPortal ? `Create your ${fromPortal.title} account` : 'Create an account'}</CardTitle>
                 <CardDescription>
-                  Enter your details to create your account
+                  {fromPortal ? fromPortal.description : 'Enter your details to create your account'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {pendingVerification ? (
+                {fromPortal && fromPortal.role !== 'student' ? (
+                  <div className="text-sm text-muted-foreground bg-muted/50 border border-border rounded-lg p-4 space-y-2">
+                    <p>
+                      {fromPortal.title} accounts are provisioned by the Beyond Barista Academy team, not created
+                      through self-service sign-up.
+                    </p>
+                    <p>
+                      If you already have {fromPortal.title.toLowerCase()} access, switch to the{' '}
+                      <button type="button" onClick={() => setActiveTab('login')} className="text-bba-brown font-semibold hover:underline">
+                        Login
+                      </button>{' '}
+                      tab. Otherwise, contact the academy to request access.
+                    </p>
+                  </div>
+                ) : pendingVerification ? (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
                       We sent a 6-digit verification code to your email. Enter it below to finish creating your account.

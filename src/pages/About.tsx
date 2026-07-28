@@ -1,6 +1,15 @@
+import { Link } from 'react-router-dom';
+import { GraduationCap, ArrowRight } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import HeroSection from '../components/ui/HeroSection';
 import SectionTitle from '../components/ui/SectionTitle';
+import { ORIENTATION_CURRICULUM } from '../data/orientationCurriculum';
+
+// Course id for the seeded "Orientation: Welcome to Beyond Barista Academy"
+// course in Neon (see neon/seed_orientation.sql).
+const ORIENTATION_COURSE_ID = '25';
+
+const orientationLessons = ORIENTATION_CURRICULUM.flatMap((m) => m.lessons);
 
 const About = () => {
   return (
@@ -22,6 +31,47 @@ const About = () => {
             <p className="text-lg font-medium text-bba-brown mb-8">
               Our students skip internships—we simulate real-world work environments like actual bars, coffee shops, and wine cellars to ensure you're job-ready the day you graduate.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Orientation - mandatory before any course */}
+      <section className="section-padding bg-bba-brown text-white">
+        <div className="container-custom">
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 border border-white/20 rounded-full text-sm mb-4">
+              <GraduationCap size={16} /> Every Student Starts Here
+            </span>
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4">Welcome to Beyond Barista Academy</h2>
+            <p className="text-white/80 text-lg">
+              This module should be mandatory before students can access any course.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-xl font-semibold mb-6 text-center">Orientation Contents</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {orientationLessons.map((lesson) => {
+                const [number, ...rest] = lesson.title.split(' ');
+                return (
+                  <div key={lesson.id} className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-lg px-5 py-4">
+                    <span className="shrink-0 w-11 h-11 rounded-full bg-white/10 flex items-center justify-center font-semibold text-sm">
+                      {number}
+                    </span>
+                    <span className="text-white/90">{rest.join(' ')}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="text-center mt-10">
+              <Link
+                to={`/lms/courses/${ORIENTATION_COURSE_ID}/learn`}
+                className="inline-flex items-center gap-2 bg-white text-bba-brown font-semibold px-8 py-3 rounded-lg hover:bg-bba-cream transition-colors"
+              >
+                Start Orientation Now <ArrowRight size={18} />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

@@ -71,8 +71,8 @@ export async function requireUser(req: VercelRequest): Promise<AuthedUser> {
   }
 
   const created = await sql`
-    INSERT INTO users (clerk_id, name, email, role)
-    VALUES (${clerkId}, ${name}, ${email}, 'student')
+    INSERT INTO users (clerk_id, name, email, role, created_at)
+    VALUES (${clerkId}, ${name}, ${email}, 'student', to_char(now(), 'YYYY-MM-DD HH24:MI:SS'))
     RETURNING id, clerk_id, email, name, role
   `;
   const row = created[0] as any;

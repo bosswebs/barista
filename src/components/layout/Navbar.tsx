@@ -3,10 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Menu, X, UserCircle, LogOut, BookOpen,
   ChevronDown, Briefcase, Calendar, Rss, Star, Crown,
-  GraduationCap, Sun, Moon
+  GraduationCap, Sun, Moon, Info, UserPlus, type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAvailablePortals } from '@/lib/portals';
+import { PORTALS, getAvailablePortals } from '@/lib/portals';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -14,23 +14,33 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
-const navigation = [
-  { name: 'Home', href: '/' },
-  { name: 'About Us', href: '/about' },
-  { name: 'Services', href: '/services' },
-  { name: 'Academy', href: '#', megaMenu: true },
-  { name: 'Career', href: '/career' },
-  { name: 'Contact', href: '/contact' },
-];
+type DropdownItem = {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  desc: string;
+  state?: { from: string };
+};
 
-const academyMenu = [
+// Learning platform only - things students actually do inside the LMS.
+const academyMenu: DropdownItem[] = [
   { name: 'Course Catalog', href: '/lms/courses', icon: BookOpen, desc: 'Browse all hospitality courses' },
   { name: 'Events & Workshops', href: '/events', icon: Calendar, desc: 'Upcoming workshops & webinars' },
-  { name: 'Job Board', href: '/jobs', icon: Briefcase, desc: 'Find hospitality opportunities' },
   { name: 'Blog & Articles', href: '/blog', icon: Rss, desc: 'Coffee, career & hospitality guides' },
   { name: 'Membership Plans', href: '/membership', icon: Crown, desc: 'Unlock premium courses' },
   { name: 'Leaderboard', href: '/lms/leaderboard', icon: Star, desc: 'Top performing students' },
+];
+
+// The company and its people - used to live oddly under Academy.
+const aboutMenu: DropdownItem[] = [
+  { name: 'Our Story', href: '/about', icon: Info, desc: 'Learn about Beyond Barista Academy' },
   { name: 'Trainers & Instructors', href: '/trainers', icon: GraduationCap, desc: 'Meet our expert team' },
+];
+
+// Employment - working at BBA vs. jobs BBA connects graduates to.
+const careerMenu: DropdownItem[] = [
+  { name: 'Work With Us', href: '/career', icon: UserPlus, desc: 'Join the Beyond Barista team' },
+  { name: 'Job Board', href: '/jobs', icon: Briefcase, desc: 'Find hospitality opportunities' },
 ];
 
 const Navbar = () => {
@@ -41,10 +51,34 @@ const Navbar = () => {
   const { user, signOut } = useAuth();
   const portals = getAvailablePortals(user?.user_metadata?.role);
 
+  // Signed in: link straight into the portals the user actually has access to.
+  // Signed out: show all three as a preview, routed through /auth with a
+  // return-to state so login lands them on the portal they picked.
+  const portalsMenu: DropdownItem[] = (user ? portals : PORTALS).map((p) => ({
+    name: p.title,
+    href: user ? p.href : '/auth',
+    icon: p.icon,
+    desc: p.description,
+    state: user ? undefined : { from: p.href },
+  }));
+
+  const navigation = [
+    { name: 'Home', href: '/' },
+    { name: 'About Us', href: '/about', dropdown: aboutMenu },
+    { name: 'Services', href: '/services' },
+    { name: 'Academy', href: '/lms/courses', dropdown: academyMenu },
+    { name: 'Portals', href: user ? portals[0]?.href ?? '/lms' : '/auth', dropdown: portalsMenu },
+    { name: 'Career', href: '/career', dropdown: careerMenu },
+    { name: 'Contact', href: '/contact' },
+  ];
+
   const getInitials = (name?: string) => {
     if (!name) return 'BBA';
     return name.split(' ').map(p => p[0]).join('').toUpperCase().substring(0, 2);
   };
+
+  const isItemActive = (item: typeof navigation[number]) =>
+    location.pathname === item.href || (item.dropdown?.some(d => d.href === location.pathname) ?? false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -78,45 +112,50 @@ const Navbar = () => {
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center space-x-1">
           {navigation.map((item) => {
-            if (item.megaMenu) {
+            const active = isItemActive(item);
+
+            if (item.dropdown) {
+              const isWide = item.dropdown.length > 3;
               return (
                 <div key={item.name} className="relative group">
-                  <button className={`nav-link flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-50 ${
-                    ['/lms/courses','/events','/jobs','/blog','/membership','/trainers','/lms/leaderboard'].includes(location.pathname)
-                      ? 'text-lms-primary font-medium' : 'text-gray-700'
-                  }`}>
+                  <Link to={item.href}
+                    className={`nav-link flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-50 ${
+                      active ? 'text-lms-primary font-medium' : 'text-gray-700'
+                    }`}>
                     {item.name}
                     <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
-                  </button>
-                  {/* Mega dropdown */}
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[480px] bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-50 p-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      {academyMenu.map((m) => (
-                        <Link key={m.name} to={m.href}
-                          className="flex items-start gap-3 p-3 rounded-xl hover:bg-lms-primary/5 transition-colors group/item">
-                          <div className="p-2 bg-lms-primary/10 rounded-lg text-lms-primary group-hover/item:bg-lms-primary group-hover/item:text-white transition-colors mt-0.5">
-                            <m.icon size={16} />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-800 text-sm">{m.name}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{m.desc}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100 text-center">
-                      <Link to="/lms/courses" className="text-lms-primary text-sm font-semibold hover:underline">
-                        View all courses →
-                      </Link>
+                  </Link>
+                  {/* Hover dropdown - pt-2 (not mt-2) keeps the gap inside the
+                      hoverable box, so the mouse never leaves group-hover while
+                      moving from the trigger down into the panel. */}
+                  <div className={`absolute left-1/2 -translate-x-1/2 top-full pt-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto z-50 ${
+                    isWide ? 'w-[480px]' : 'w-72'
+                  }`}>
+                    <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-4">
+                      <div className={isWide ? 'grid grid-cols-2 gap-2' : 'space-y-1'}>
+                        {item.dropdown.map((m) => (
+                          <Link key={m.name} to={m.href} state={m.state}
+                            className="flex items-start gap-3 p-3 rounded-xl hover:bg-lms-primary/5 transition-colors group/item">
+                            <div className="p-2 bg-lms-primary/10 rounded-lg text-lms-primary group-hover/item:bg-lms-primary group-hover/item:text-white transition-colors mt-0.5">
+                              <m.icon size={16} />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-800 text-sm">{m.name}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{m.desc}</p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               );
             }
+
             return (
               <Link key={item.name} to={item.href}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === item.href
+                  active
                     ? 'text-lms-primary bg-lms-primary/5' : 'text-gray-700 hover:text-lms-primary hover:bg-gray-50'
                 }`}>
                 {item.name}
@@ -189,25 +228,28 @@ const Navbar = () => {
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg max-h-[80vh] overflow-y-auto">
           <div className="container-custom py-4 space-y-1">
-            {navigation.filter(i => !i.megaMenu).map((item) => (
-              <Link key={item.name} to={item.href}
-                className={`block px-4 py-3 rounded-xl text-sm font-medium ${
-                  location.pathname === item.href
-                    ? 'bg-lms-primary/10 text-lms-primary' : 'text-gray-700 hover:bg-gray-50'
-                }`}>
-                {item.name}
-              </Link>
-            ))}
-            <div className="pt-2 border-t border-gray-100">
-              <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Academy</p>
-              {academyMenu.map((m) => (
-                <Link key={m.name} to={m.href}
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-lms-primary/5 hover:text-lms-primary transition-colors">
-                  <m.icon size={16} className="text-lms-primary" />
-                  {m.name}
+            {navigation.map((item) => (
+              <div key={item.name}>
+                <Link to={item.href}
+                  className={`block px-4 py-3 rounded-xl text-sm font-medium ${
+                    location.pathname === item.href
+                      ? 'bg-lms-primary/10 text-lms-primary' : 'text-gray-700 hover:bg-gray-50'
+                  }`}>
+                  {item.name}
                 </Link>
-              ))}
-            </div>
+                {item.dropdown && (
+                  <div className="pl-3 pb-2">
+                    {item.dropdown.map((m) => (
+                      <Link key={m.name} to={m.href} state={m.state}
+                        className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-lms-primary/5 hover:text-lms-primary transition-colors">
+                        <m.icon size={16} className="text-lms-primary" />
+                        {m.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
             <div className="pt-3 border-t border-gray-100">
               {user ? (
                 <>
