@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSql } from '../_lib/db';
-import { optionalUser, requireUser, requireAdminOrInstructor } from '../_lib/auth';
-import { courseToDto } from '../_lib/dto';
-import { withHandler, methodNotAllowed, HttpError } from '../_lib/http';
+import { getSql } from '../_lib/db.js';
+import { optionalUser, requireUser, requireAdminOrInstructor } from '../_lib/auth.js';
+import { courseToDto } from '../_lib/dto.js';
+import { withHandler, methodNotAllowed, HttpError } from '../_lib/http.js';
 
 function slugify(title: string): string {
   const base = title

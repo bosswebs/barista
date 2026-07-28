@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSql } from '../_lib/db';
-import { requireUser } from '../_lib/auth';
-import { courseToDto, moduleToDto, lessonToDto } from '../_lib/dto';
-import { withHandler, methodNotAllowed, HttpError } from '../_lib/http';
+import { getSql } from '../_lib/db.js';
+import { requireUser } from '../_lib/auth.js';
+import { courseToDto, moduleToDto, lessonToDto } from '../_lib/dto.js';
+import { withHandler, methodNotAllowed, HttpError } from '../_lib/http.js';
 
 async function assertOwnerOrAdmin(sql: ReturnType<typeof getSql>, courseId: number, userId: number, role: string) {
   const rows = await sql`SELECT instructor_id FROM courses WHERE id = ${courseId}`;

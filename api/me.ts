@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from './_lib/auth';
-import { withHandler, methodNotAllowed } from './_lib/http';
+import { requireUser } from './_lib/auth.js';
+import { withHandler, methodNotAllowed } from './_lib/http.js';
 
 // Returns the authoritative profile (including role) for the caller's Clerk
 // session, resolved server-side against Neon's users table. The client can't

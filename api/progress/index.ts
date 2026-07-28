@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSql } from '../_lib/db';
-import { requireUser } from '../_lib/auth';
-import { withHandler, methodNotAllowed, HttpError } from '../_lib/http';
+import { getSql } from '../_lib/db.js';
+import { requireUser } from '../_lib/auth.js';
+import { withHandler, methodNotAllowed, HttpError } from '../_lib/http.js';
 
 export default withHandler(async (req: VercelRequest, res: VercelResponse) => {
   const user = await requireUser(req);

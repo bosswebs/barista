@@ -1,7 +1,7 @@
 import type { VercelRequest } from '@vercel/node';
 import { createClerkClient, verifyToken } from '@clerk/backend';
-import { getSql } from './db';
-import { HttpError } from './http';
+import { getSql } from './db.js';
+import { HttpError } from './http.js';
 
 export type AuthedUser = {
   id: number;

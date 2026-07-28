@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSql } from '../_lib/db';
-import { requireUser } from '../_lib/auth';
-import { lessonToDto } from '../_lib/dto';
-import { withHandler, methodNotAllowed, HttpError } from '../_lib/http';
+import { getSql } from '../_lib/db.js';
+import { requireUser } from '../_lib/auth.js';
+import { lessonToDto } from '../_lib/dto.js';
+import { withHandler, methodNotAllowed, HttpError } from '../_lib/http.js';
 
 export default withHandler(async (req: VercelRequest, res: VercelResponse) => {
   if (req.method !== 'POST') {
