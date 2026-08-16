@@ -35,3 +35,5 @@ implementation_plan.md
 
 .vercel
 .env*
+*.exe
+*.pdf

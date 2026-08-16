@@ -17,6 +17,12 @@ function getSecretKey(): string {
   return key;
 }
 
+// Shared Clerk backend client for routes that need to create/update/ban
+// Clerk identities directly (admin user management).
+export function getClerkClient() {
+  return createClerkClient({ secretKey: getSecretKey() });
+}
+
 // Verifies the caller's Clerk session JWT and resolves it to a row in our
 // own `users` table (creating or linking one on first sight), so route
 // handlers can enforce ownership with plain SQL instead of relying on RLS
@@ -93,5 +99,13 @@ export async function optionalUser(req: VercelRequest): Promise<AuthedUser | nul
 export function requireAdminOrInstructor(user: AuthedUser) {
   if (user.role !== 'admin' && user.role !== 'instructor') {
     throw new HttpError(403, 'Instructor or admin role required');
+  }
+}
+
+// User management (create/edit/password/ban/delete other accounts) is
+// strictly admin-only - never instructor or staff.
+export function requireAdmin(user: AuthedUser) {
+  if (user.role !== 'admin') {
+    throw new HttpError(403, 'Admin role required');
   }
 }

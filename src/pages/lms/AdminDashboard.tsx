@@ -1,23 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import RoleSwitcher from '@/components/lms/RoleSwitcher';
 import TranscriptModal from '@/components/lms/TranscriptModal';
 import {
   Users, BookOpen, DollarSign, Award, Settings, BarChart2, Plus, Search,
   ShieldCheck, Briefcase, Calendar, Rss, Edit3, Trash2, Download, Eye,
-  Building, GraduationCap, ClipboardList, HelpCircle, FileText, Sparkles, CheckCircle2
+  Building, GraduationCap, ClipboardList, HelpCircle, FileText, Sparkles, CheckCircle2,
+  KeyRound, Ban, UserCheck, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { BARISTA_CURRICULUM } from '@/data/baristaCurriculum';
 import { ORIENTATION_CURRICULUM } from '@/data/orientationCurriculum';
-
-const initialUsers = [
-  { id: 'u1', name: 'Marie Uwase', email: 'marie@example.com', role: 'Student', enrolled: 4, status: 'Active', joined: 'Jul 10, 2026' },
-  { id: 'u2', name: 'Emmanuel Nkusi', email: 'emmanuel@example.com', role: 'Student', enrolled: 3, status: 'Active', joined: 'Jul 12, 2026' },
-  { id: 'u3', name: 'Fatou Diallo', email: 'fatou@example.com', role: 'Instructor', enrolled: 8, status: 'Active', joined: 'Jun 01, 2026' },
-  { id: 'u4', name: 'Jean-Paul Nkurunziza', email: 'jp@beyondbarista.rw', role: 'Super Admin', enrolled: 15, status: 'Active', joined: 'Jan 15, 2025' },
-  { id: 'u5', name: 'Amina Kalisa', email: 'amina@example.com', role: 'Instructor', enrolled: 5, status: 'Active', joined: 'Mar 20, 2026' },
-];
+import { useAuth } from '@/contexts/AuthContext';
+import { api, type AdminUserDto } from '@/lib/api';
 
 const initialCertificates = [
   { certNumber: 'BBA-2026-001', studentName: 'Marie Uwase', course: 'Professional Barista Mastery', grade: 'Distinction', score: '94%', issued: 'Jul 16, 2026' },
@@ -43,34 +38,115 @@ export const AdminDashboard = () => {
 
   const [curriculumView, setCurriculumView] = useState<'orientation' | 'barista'>('orientation');
   const [search, setSearch] = useState('');
-  const [users, setUsers] = useState(initialUsers);
+  const { user: currentUser, getToken } = useAuth();
+  const [users, setUsers] = useState<AdminUserDto[]>([]);
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
   const [certificates, setCertificates] = useState(initialCertificates);
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
   const [selectedStudentForTranscript, setSelectedStudentForTranscript] = useState('Marie Uwase');
 
   // Modals
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'Student' });
+  const [isSavingUser, setIsSavingUser] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'student', password: '' });
+
+  const [passwordTarget, setPasswordTarget] = useState<AdminUserDto | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const [isAddCertOpen, setIsAddCertOpen] = useState(false);
   const [newCert, setNewCert] = useState({ studentName: '', course: 'Professional Barista Mastery', score: '95%', grade: 'Distinction' });
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const fetchUsers = async () => {
+    setIsUsersLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Not signed in');
+      const data = await api.admin.users.list(token);
+      setUsers(data);
+    } catch (err: any) {
+      toast.error('Failed to load users: ' + err.message);
+    } finally {
+      setIsUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'users') fetchUsers();
+  }, [activeTab]);
+
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUser.name || !newUser.email) return toast.error("Please provide name and email.");
-    const userObj = {
-      id: `u-${Date.now()}`,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      enrolled: 1,
-      status: 'Active',
-      joined: 'Just now'
-    };
-    setUsers([userObj, ...users]);
-    setIsAddUserOpen(false);
-    setNewUser({ name: '', email: '', role: 'Student' });
-    toast.success(`User ${userObj.name} added successfully!`);
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      return toast.error('Please provide name, email, and a password.');
+    }
+    if (newUser.password.length < 8) {
+      return toast.error('Password must be at least 8 characters.');
+    }
+    setIsSavingUser(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Not signed in');
+      const created = await api.admin.users.create(newUser, token);
+      setUsers((prev) => [created, ...prev]);
+      setIsAddUserOpen(false);
+      setNewUser({ name: '', email: '', role: 'student', password: '' });
+      toast.success(`Account created for ${created.name}.`);
+    } catch (err: any) {
+      toast.error('Failed to create user: ' + err.message);
+    } finally {
+      setIsSavingUser(false);
+    }
+  };
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordTarget) return;
+    if (newPassword.length < 8) return toast.error('Password must be at least 8 characters.');
+    setIsSavingPassword(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Not signed in');
+      await api.admin.users.setPassword(passwordTarget.id, newPassword, token);
+      toast.success(`Password updated for ${passwordTarget.name}.`);
+      setPasswordTarget(null);
+      setNewPassword('');
+    } catch (err: any) {
+      toast.error('Failed to update password: ' + err.message);
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
+  const handleToggleBan = async (u: AdminUserDto) => {
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Not signed in');
+      if (u.banned) {
+        await api.admin.users.unban(u.id, token);
+        toast.success(`${u.name} reactivated.`);
+      } else {
+        if (!window.confirm(`Suspend ${u.name}? They will not be able to sign in until reactivated.`)) return;
+        await api.admin.users.ban(u.id, token);
+        toast.success(`${u.name} suspended.`);
+      }
+      setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, banned: !u.banned } : x)));
+    } catch (err: any) {
+      toast.error('Action failed: ' + err.message);
+    }
+  };
+
+  const handleDeleteUser = async (u: AdminUserDto) => {
+    if (!window.confirm(`Permanently delete ${u.name}'s account? This cannot be undone.`)) return;
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Not signed in');
+      await api.admin.users.remove(u.id, token);
+      setUsers((prev) => prev.filter((x) => x.id !== u.id));
+      toast.success(`${u.name} deleted.`);
+    } catch (err: any) {
+      toast.error('Failed to delete user: ' + err.message);
+    }
   };
 
   const handleIssueCert = (e: React.FormEvent) => {
@@ -110,8 +186,8 @@ export const AdminDashboard = () => {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => setIsAddUserOpen(true)} className="lms-btn-secondary text-xs py-2.5 flex items-center gap-1.5 shadow-md">
-                  <Plus size={14} /> Enrol Student
+                <button onClick={() => { setActiveTab('users'); setIsAddUserOpen(true); }} className="lms-btn-secondary text-xs py-2.5 flex items-center gap-1.5 shadow-md">
+                  <Plus size={14} /> Add User
                 </button>
                 <button onClick={() => setIsAddCertOpen(true)} className="lms-btn-accent text-xs py-2.5 flex items-center gap-1.5 shadow-md">
                   <Award size={14} /> Issue Cert
@@ -343,36 +419,87 @@ export const AdminDashboard = () => {
                 </button>
               </div>
 
-              <table className="w-full text-left">
-                <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider font-semibold">
-                  <tr>
-                    <th className="p-4">User Name & Email</th>
-                    <th className="p-4">Role</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {users.filter(u => u.name.toLowerCase().includes(search.toLowerCase())).map((u) => (
-                    <tr key={u.id} className="hover:bg-gray-50">
-                      <td className="p-4 font-bold text-gray-900">{u.name} <span className="block text-[11px] font-normal text-gray-400">{u.email}</span></td>
-                      <td className="p-4 font-semibold">{u.role}</td>
-                      <td className="p-4"><span className="badge-free">{u.status}</span></td>
-                      <td className="p-4 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedStudentForTranscript(u.name);
-                            setIsTranscriptOpen(true);
-                          }}
-                          className="text-lms-primary font-bold hover:underline"
-                        >
-                          Transcript
-                        </button>
-                      </td>
+              {isUsersLoading ? (
+                <div className="flex justify-center py-16">
+                  <Loader2 size={28} className="animate-spin text-lms-primary" />
+                </div>
+              ) : (
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider font-semibold">
+                    <tr>
+                      <th className="p-4">User Name & Email</th>
+                      <th className="p-4">Role</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())).map((u) => {
+                      const isSelf = currentUser?.email?.toLowerCase() === u.email.toLowerCase();
+                      return (
+                        <tr key={u.id} className="hover:bg-gray-50">
+                          <td className="p-4 font-bold text-gray-900">
+                            {u.name} {isSelf && <span className="text-lms-primary font-normal">(you)</span>}
+                            <span className="block text-[11px] font-normal text-gray-400">{u.email}</span>
+                          </td>
+                          <td className="p-4 font-semibold capitalize">{u.role}</td>
+                          <td className="p-4">
+                            {!u.linked ? (
+                              <span className="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-[11px] font-semibold">Pending First Login</span>
+                            ) : u.banned ? (
+                              <span className="bg-red-50 text-red-600 px-2 py-1 rounded-full text-[11px] font-semibold">Suspended</span>
+                            ) : (
+                              <span className="badge-free">Active</span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center justify-end gap-3">
+                              {u.role === 'student' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedStudentForTranscript(u.name);
+                                    setIsTranscriptOpen(true);
+                                  }}
+                                  className="text-lms-primary font-bold hover:underline"
+                                >
+                                  Transcript
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setPasswordTarget(u)}
+                                disabled={!u.linked}
+                                title={!u.linked ? 'User has not signed in yet' : 'Reset password'}
+                                className="text-gray-500 hover:text-lms-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <KeyRound size={15} />
+                              </button>
+                              <button
+                                onClick={() => handleToggleBan(u)}
+                                disabled={!u.linked || isSelf}
+                                title={isSelf ? "You can't suspend your own account" : !u.linked ? 'User has not signed in yet' : u.banned ? 'Reactivate' : 'Suspend'}
+                                className="text-gray-500 hover:text-amber-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                {u.banned ? <UserCheck size={15} /> : <Ban size={15} />}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(u)}
+                                disabled={isSelf}
+                                title={isSelf ? "You can't delete your own account" : 'Delete permanently'}
+                                className="text-gray-500 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {users.length === 0 && (
+                      <tr><td colSpan={4} className="p-8 text-center text-gray-400">No users yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
 
@@ -469,7 +596,8 @@ export const AdminDashboard = () => {
       {isAddUserOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-inter text-xs">
           <form onSubmit={handleAddUser} className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="font-cormorant text-2xl font-bold text-lms-dark">Enrol New Student</h3>
+            <h3 className="font-cormorant text-2xl font-bold text-lms-dark">Add New User</h3>
+            <p className="text-gray-500 -mt-2">Creates a real, working login. Share the password with them directly.</p>
             <div>
               <label className="font-semibold text-gray-600 block mb-1">Full Name</label>
               <input type="text" placeholder="e.g. Divine Mutoni" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} className="lms-input" />
@@ -478,9 +606,53 @@ export const AdminDashboard = () => {
               <label className="font-semibold text-gray-600 block mb-1">Email</label>
               <input type="email" placeholder="e.g. divine@example.com" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="lms-input" />
             </div>
+            <div>
+              <label className="font-semibold text-gray-600 block mb-1">Role</label>
+              <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} className="lms-input">
+                <option value="student">Student</option>
+                <option value="instructor">Instructor</option>
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label className="font-semibold text-gray-600 block mb-1">Temporary Password</label>
+              <input type="text" placeholder="At least 8 characters" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} className="lms-input" />
+            </div>
             <div className="flex gap-2 pt-2">
-              <button type="submit" className="lms-btn-primary flex-1">Complete Enrolment</button>
+              <button type="submit" disabled={isSavingUser} className="lms-btn-primary flex-1 disabled:opacity-60">
+                {isSavingUser ? 'Creating...' : 'Create Account'}
+              </button>
               <button type="button" onClick={() => setIsAddUserOpen(false)} className="px-4 py-2 border rounded-xl font-bold">Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {passwordTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-inter text-xs">
+          <form onSubmit={handleSetPassword} className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 className="font-cormorant text-2xl font-bold text-lms-dark">Reset Password</h3>
+            <p className="text-gray-500 -mt-2">
+              Set a new password for <span className="font-semibold text-gray-700">{passwordTarget.name}</span>. They'll be signed out of all other sessions.
+            </p>
+            <div>
+              <label className="font-semibold text-gray-600 block mb-1">New Password</label>
+              <input
+                type="text"
+                autoFocus
+                placeholder="At least 8 characters"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                className="lms-input"
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button type="submit" disabled={isSavingPassword} className="lms-btn-primary flex-1 disabled:opacity-60">
+                {isSavingPassword ? 'Saving...' : 'Set New Password'}
+              </button>
+              <button type="button" onClick={() => { setPasswordTarget(null); setNewPassword(''); }} className="px-4 py-2 border rounded-xl font-bold">Cancel</button>
             </div>
           </form>
         </div>

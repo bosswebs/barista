@@ -21,6 +21,13 @@ export function withHandler(handler: Handler): Handler {
         res.status(err.status).json({ error: err.message });
         return;
       }
+      // Clerk backend SDK errors (e.g. pwned/weak password, duplicate email)
+      // carry a human-readable reason - surface it instead of a bare 500.
+      if (err?.clerkError && Array.isArray(err.errors) && err.errors.length > 0) {
+        const message = err.errors.map((e: any) => e.longMessage || e.message).join(' ');
+        res.status(422).json({ error: message });
+        return;
+      }
       console.error('Unhandled API error:', err);
       res.status(500).json({ error: 'Internal server error' });
     }

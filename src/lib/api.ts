@@ -37,6 +37,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return res.json();
 }
 
+export type AdminUserDto = {
+  id: string;
+  name: string;
+  email: string;
+  role: 'student' | 'instructor' | 'staff' | 'admin';
+  linked: boolean;
+  banned: boolean;
+  created_at: string;
+};
+
 export const api = {
   me: (token: string) => request<{ id: string; email: string; name: string; role: string }>('/me', { token }),
   courses: {
@@ -72,5 +82,23 @@ export const api = {
   },
   instructor: {
     courses: (token: string) => request<any[]>('/instructor/courses', { token }),
+  },
+  admin: {
+    users: {
+      list: (token: string) => request<AdminUserDto[]>('/admin/users', { token }),
+      create: (
+        data: { name: string; email: string; role: string; password: string },
+        token: string
+      ) => request<AdminUserDto>('/admin/users', { method: 'POST', body: data, token }),
+      update: (id: string, data: { name?: string; role?: string }, token: string) =>
+        request<AdminUserDto>(`/admin/users/${id}`, { method: 'PATCH', body: data, token }),
+      remove: (id: string, token: string) => request<void>(`/admin/users/${id}`, { method: 'DELETE', token }),
+      setPassword: (id: string, password: string, token: string) =>
+        request<{ ok: true }>(`/admin/users/${id}/password`, { method: 'POST', body: { password }, token }),
+      ban: (id: string, token: string) =>
+        request<{ ok: true; banned: true }>(`/admin/users/${id}/ban`, { method: 'POST', token }),
+      unban: (id: string, token: string) =>
+        request<{ ok: true; banned: false }>(`/admin/users/${id}/unban`, { method: 'POST', token }),
+    },
   },
 };

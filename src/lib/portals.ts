@@ -1,7 +1,7 @@
 import { BookOpen, LayoutDashboard, Crown, type LucideIcon } from 'lucide-react';
 
 export type Portal = {
-  role: 'student' | 'instructor' | 'admin';
+  role: 'student' | 'instructor' | 'staff' | 'admin';
   title: string;
   href: string;
   icon: LucideIcon;

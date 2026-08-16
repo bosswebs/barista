@@ -49,3 +49,15 @@ export function lessonToDto(row: any) {
     minutes: row.minutes,
   };
 }
+
+export function userToDto(row: any, banned = false) {
+  return {
+    id: String(row.id),
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    linked: row.clerk_id != null,
+    banned,
+    created_at: row.created_at,
+  };
+}
