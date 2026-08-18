@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus, Edit, Trash2, Users, BookOpen, Sparkles, Video, CheckCircle,
@@ -9,8 +9,11 @@ import RoleSwitcher from "@/components/lms/RoleSwitcher";
 import AIAssistantModal from "@/components/lms/AIAssistantModal";
 import LiveClassModal from "@/components/lms/LiveClassModal";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
 
 export const InstructorDashboard = () => {
+  const { user, getToken } = useAuth();
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiModalInitialMode, setAiModalInitialMode] = useState<'quiz' | 'outline' | 'grading'>('quiz');
   const [isLiveClassModalOpen, setIsLiveClassModalOpen] = useState(false);
@@ -20,6 +23,30 @@ export const InstructorDashboard = () => {
     { id: 'c2', title: 'Espresso Mechanics & Calibration', students: 380, modules: 6, rating: 4.8, status: 'Published' },
     { id: 'c3', title: 'Advanced Mixology & Cocktail Design', students: 210, modules: 8, rating: 5.0, status: 'Draft' },
   ]);
+
+  useEffect(() => {
+    async function loadCourses() {
+      if (!user) return;
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const courses = await api.courses.list(token);
+        if (courses && courses.length > 0) {
+          setInstructorCourses(courses.map((c: any) => ({
+            id: String(c.id),
+            title: c.title,
+            students: c.students || 0,
+            modules: c.modules_count || 12,
+            rating: 4.9,
+            status: c.status === 'active' ? 'Published' : 'Draft',
+          })));
+        }
+      } catch (err) {
+        console.error("Could not fetch instructor courses:", err);
+      }
+    }
+    loadCourses();
+  }, [user]);
 
   const studentSubmissions = [
     { id: 'sub1', student: 'Marie Uwase', course: 'Espresso Mechanics', assignment: 'Module 06: Extraction Yield Essay', submitted: '2 hours ago', status: 'Pending Review' },

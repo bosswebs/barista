@@ -42,6 +42,67 @@ export default function CourseEditor() {
 
   const [modules, setModules] = useState<Module[]>([]);
 
+  const DEMO_COURSES: Record<string, any> = {
+    c1: {
+      title: "Professional Barista Mastery Program",
+      description: "Master espresso theory, sensor extraction, milk texturing, latte art, and high-volume cafe operations.",
+      image_url: "/images/barista.jpg",
+      modules: [
+        {
+          id: "demo-m1",
+          title: "Module 01: Coffee Agronomy & Processing",
+          order_index: 0,
+          isNew: true,
+          lessons: [
+            { id: "demo-l1", title: "Botanical Varieties: Arabica vs Canephora", type: "video", video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", content: "Overview of coffee cultivars, terroir, and harvesting.", order_index: 0, isNew: true },
+            { id: "demo-l2", title: "Post-Harvest Processing & Moisture Content", type: "text", video_url: "", content: "Washed, natural, anaerobic, and honey fermentation methods.", order_index: 1, isNew: true }
+          ]
+        },
+        {
+          id: "demo-m2",
+          title: "Module 02: Espresso Dial-in & Hydrodynamics",
+          order_index: 1,
+          isNew: true,
+          lessons: [
+            { id: "demo-l3", title: "Grind Particle Distribution & Flow Dynamics", type: "video", video_url: "", content: "Understanding brew ratios, channeling, and extraction time.", order_index: 0, isNew: true }
+          ]
+        }
+      ]
+    },
+    c2: {
+      title: "Espresso Mechanics & Calibration",
+      description: "Advanced calibration techniques, pressure profiling, and water chemistry.",
+      image_url: "/images/hero-image.jpg",
+      modules: [
+        {
+          id: "demo-m3",
+          title: "Module 01: Pressure Profiling & Pre-infusion",
+          order_index: 0,
+          isNew: true,
+          lessons: [
+            { id: "demo-l4", title: "Flow Rate vs Bar Pressure Curves", type: "video", video_url: "", content: "Fine-tuning pressure profiles for single origins.", order_index: 0, isNew: true }
+          ]
+        }
+      ]
+    },
+    c3: {
+      title: "Advanced Mixology & Cocktail Design",
+      description: "Botanical infusions, cold brew reductions, and specialty beverage menus.",
+      image_url: "/images/culinary.jpg",
+      modules: [
+        {
+          id: "demo-m4",
+          title: "Module 01: Flavor Architecture & Signature Syrups",
+          order_index: 0,
+          isNew: true,
+          lessons: [
+            { id: "demo-l5", title: "Extracting Aromatics & Bitters", type: "text", video_url: "", content: "Methods for custom botanical extraction.", order_index: 0, isNew: true }
+          ]
+        }
+      ]
+    }
+  };
+
   // Load existing course data when editing
   useEffect(() => {
     if (!isNew && id) {
@@ -52,6 +113,20 @@ export default function CourseEditor() {
   const loadCourse = async (courseId: string) => {
     setIsLoading(true);
     setError(null);
+
+    // If it's a demo preset course (e.g. c1, c2, c3)
+    if (courseId.startsWith('c') && DEMO_COURSES[courseId]) {
+      const demo = DEMO_COURSES[courseId];
+      setCourse({
+        title: demo.title,
+        description: demo.description,
+        image_url: demo.image_url,
+      });
+      setModules(demo.modules);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const token = await getToken();
       const data = await api.courses.get(courseId, token);
@@ -76,7 +151,18 @@ export default function CourseEditor() {
 
       setModules(sortedModules);
     } catch (err: any) {
-      setError("Could not load course: " + err.message);
+      // If server returned error but it matches a demo id, fallback to demo
+      if (DEMO_COURSES[courseId]) {
+        const demo = DEMO_COURSES[courseId];
+        setCourse({
+          title: demo.title,
+          description: demo.description,
+          image_url: demo.image_url,
+        });
+        setModules(demo.modules);
+      } else {
+        setError("Could not load course: " + err.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -98,8 +184,9 @@ export default function CourseEditor() {
       if (!token) throw new Error("Not signed in");
 
       let courseId = id;
+      const isDemoCourse = id ? id.startsWith('c') : false;
 
-      if (isNew) {
+      if (isNew || isDemoCourse) {
         const newCourse = await api.courses.create(
           {
             title: course.title,
@@ -108,7 +195,7 @@ export default function CourseEditor() {
           },
           token
         );
-        courseId = newCourse.id;
+        courseId = String(newCourse.id);
       } else if (courseId) {
         await api.courses.update(
           courseId,
@@ -126,9 +213,9 @@ export default function CourseEditor() {
         const mod = modules[mIdx];
         let moduleId = mod.id;
 
-        if (mod.isNew) {
-          const newMod = await api.modules.create({ course_id: courseId, title: mod.title }, token);
-          moduleId = newMod.id;
+        if (mod.isNew || isDemoCourse || String(mod.id).startsWith('demo-') || String(mod.id).startsWith('new-')) {
+          const newMod = await api.modules.create({ course_id: Number(courseId), title: mod.title }, token);
+          moduleId = String(newMod.id);
         } else {
           await api.modules.update(moduleId, { title: mod.title, order_index: mIdx }, token);
         }
@@ -136,10 +223,10 @@ export default function CourseEditor() {
         // Save each lesson in this module
         for (let lIdx = 0; lIdx < mod.lessons.length; lIdx++) {
           const lesson = mod.lessons[lIdx];
-          if (lesson.isNew) {
+          if (lesson.isNew || isDemoCourse || String(lesson.id).startsWith('demo-') || String(lesson.id).startsWith('new-')) {
             await api.lessons.create(
               {
-                module_id: moduleId,
+                module_id: Number(moduleId),
                 title: lesson.title,
                 video_url: lesson.video_url || null,
                 content: lesson.content || null,
@@ -161,7 +248,7 @@ export default function CourseEditor() {
         }
       }
 
-      toast.success(isNew ? "Course created successfully! 🎉" : "Course updated successfully!");
+      toast.success(isNew || isDemoCourse ? "Course created and published! 🎉" : "Course updated successfully!");
       navigate('/lms/instructor');
     } catch (err: any) {
       toast.error("Failed to save: " + err.message);

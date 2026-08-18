@@ -22,18 +22,30 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
+  const contentType = res.headers.get('content-type') || '';
+
   if (!res.ok) {
     let message = `Request failed (${res.status})`;
     try {
-      const errBody = await res.json();
-      if (errBody?.error) message = errBody.error;
+      if (contentType.includes('application/json')) {
+        const errBody = await res.json();
+        if (errBody?.error) message = errBody.error;
+      } else {
+        const text = await res.text();
+        if (text && !text.startsWith('<!DOCTYPE') && !text.startsWith('<html')) {
+          message = text.slice(0, 150);
+        }
+      }
     } catch {
-      // response wasn't JSON - keep the generic message
+      // response wasn't parseable
     }
     throw new Error(message);
   }
 
   if (res.status === 204) return undefined as T;
+  if (!contentType.includes('application/json')) {
+    throw new Error(`Invalid server response format (${contentType || 'non-JSON'})`);
+  }
   return res.json();
 }
 
